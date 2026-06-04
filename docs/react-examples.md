@@ -3,6 +3,9 @@
 ## Guide pages
 - Guide complet: docs/page-guide.md
 
+## Backend example
+- Doc: docs/backend.md
+
 ## Routing (real app)
 - App router: src/backoffice/App.jsx
 - Menu: src/backoffice/layouts/Menu.jsx
