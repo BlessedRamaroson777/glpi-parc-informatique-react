@@ -1,28 +1,124 @@
 # Ajouter une nouvelle page (Common)
 
-## 1) Creer la page
-- Cree un fichier dans `src/common/pages/`.
-- Exemple: `src/common/pages/Import.jsx`.
+## 0) Installer React Router (une seule fois)
 
-## 2) Ajouter un lien au menu
-- Modifier `src/common/layouts/Menu.jsx`.
-- Ajouter un lien vers l'ancre: `<a href="#import">Import</a>`.
+```bash
+npm install react-router-dom
+```
 
-## 3) Afficher la page
-- Modifier `src/common/App.jsx`.
-- Importer la page et la rendre dans le layout.
-- Exemple:
-  - `import Import from "./pages/Import.jsx";`
-  - `<Import />`
+## 1) Créer la page
 
-## 4) Ajouter le style de la page
-- Cree un CSS dans `src/common/styles/`.
-- Exemple: `src/common/styles/import.css`.
-- Dans la page, importer le CSS:
-  - `import "../styles/import.css";`
-- Utilise une classe racine pour la page:
-  - `<section id="import" className="import-page">...</section>`
+* Créer un fichier dans `src/common/pages/`.
+* Exemple : `src/common/pages/Import.jsx`.
+
+Exemple :
+
+```jsx
+export default function Import() {
+  return (
+    <section className="import-page">
+      <h1>Import</h1>
+    </section>
+  );
+}
+```
+
+## 2) Déclarer la route
+
+Modifier `src/common/App.jsx`.
+
+Importer la page :
+
+```jsx
+import Import from "./pages/Import.jsx";
+```
+
+Ajouter la route :
+
+```jsx
+<Route path="/import" element={<Import />} />
+```
+
+Exemple complet :
+
+```jsx
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import MainLayout from "./layouts/MainLayout.jsx";
+import Home from "./pages/Home.jsx";
+import Import from "./pages/Import.jsx";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/import" element={<Import />} />
+        </Routes>
+      </MainLayout>
+    </BrowserRouter>
+  );
+}
+```
+
+## 3) Ajouter le lien dans le menu
+
+Modifier `src/common/layouts/Menu.jsx`.
+
+Importer `Link` :
+
+```jsx
+import { Link } from "react-router-dom";
+```
+
+Ajouter le lien :
+
+```jsx
+<Link to="/import">Import</Link>
+```
+
+Exemple :
+
+```jsx
+<nav className="common-menu">
+  <Link to="/">Home</Link>
+  <Link to="/import">Import</Link>
+</nav>
+```
+
+## 4) Ajouter le style
+
+Créer un fichier CSS dans `src/common/styles/`.
+
+Exemple :
+
+```text
+src/common/styles/import.css
+```
+
+Dans la page :
+
+```jsx
+import "../styles/import.css";
+```
+
+Utiliser une classe racine :
+
+```jsx
+<section className="import-page">
+```
 
 ## 5) Tester
-- Demarre l'app: `npm run dev`.
-- Clique dans le menu pour verifier la navigation par ancre.
+
+Démarrer l'application :
+
+```bash
+npm run dev
+```
+
+Vérifier :
+
+* `/` affiche Home
+* `/import` affiche Import
+* Le menu change de page sans recharger l'application
