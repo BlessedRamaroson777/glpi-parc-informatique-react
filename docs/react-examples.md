@@ -1,5 +1,8 @@
 # React examples (JSX)
 
+## Guide pages
+- Guide complet: docs/page-guide.md
+
 ## Routing (real app)
 - App router: src/backoffice/App.jsx
 - Menu: src/backoffice/layouts/Menu.jsx
