@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { login, saveTokens } from "../services/authService.jsx";
-import RefreshTokenButton from refreshTokenButton.jsx
+import RefreshTokenButton from "./RefreshTokenButton.jsx";
 
 export default function GlpiLoginForm() {
   const [username, setUsername] = useState("");
@@ -27,28 +27,28 @@ export default function GlpiLoginForm() {
 
   return (
     <div>
-        <RefreshTokenButton />
-        <form onSubmit={handleSubmit}>
+      <RefreshTokenButton />
+      <form onSubmit={handleSubmit}>
         <label htmlFor="glpi-username">Utilisateur</label>
         <input
-            id="glpi-username"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            placeholder="User"
+        id="glpi-username"
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
+        placeholder="User"
         />
 
         <label htmlFor="glpi-password">Mot de passe</label>
         <input
-            id="glpi-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Password"
+        id="glpi-password"
+        type="password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        placeholder="Password"
         />
 
         <button type="submit">Login GLPI</button>
         {status && <p>{status}</p>}
-        </form>
+      </form>
     </div>
   );
 }
