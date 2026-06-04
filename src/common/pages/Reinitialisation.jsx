@@ -202,6 +202,22 @@ export default function Reinitialisation() {
     setSelected(next);
   }
 
+  function toggleGroup(group) {
+    const allChecked = group.items.every(
+        (item) => selected[item.key]
+    );
+
+    setSelected((prev) => {
+        const next = { ...prev };
+
+        group.items.forEach((item) => {
+        next[item.key] = !allChecked;
+        });
+
+        return next;
+    });
+    }
+
   function toggleOne(key) {
     setSelected((prev) => ({
       ...prev,
@@ -272,21 +288,38 @@ export default function Reinitialisation() {
           Tout selectionner
         </label>
 
-        {ENTITY_GROUPS.map((group) => (
-          <div key={group.name}>
-            <strong>{group.name}</strong>
-            {group.items.map((item) => (
-              <label key={item.key}>
-                <input
-                  type="checkbox"
-                  checked={Boolean(selected[item.key])}
-                  onChange={() => toggleOne(item.key)}
-                />
-                {item.label}
-              </label>
-            ))}
-          </div>
-        ))}
+        {ENTITY_GROUPS.map((group) => {
+            const groupSelected = group.items.every(
+                (item) => selected[item.key]
+            );
+
+            return (
+                <div key={group.name}>
+                <strong>
+                    {group.name}
+                    <label>
+                    <input
+                        type="checkbox"
+                        checked={groupSelected}
+                        onChange={() => toggleGroup(group)}
+                    />
+                    Tout selectionner
+                    </label>
+                </strong>
+
+                {group.items.map((item) => (
+                    <label key={item.key}>
+                    <input
+                        type="checkbox"
+                        checked={Boolean(selected[item.key])}
+                        onChange={() => toggleOne(item.key)}
+                    />
+                    {item.label}
+                    </label>
+                ))}
+                </div>
+            );
+        })}
       </div>
 
       <div className="button-row">
