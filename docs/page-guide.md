@@ -23,6 +23,20 @@ export default function Import() {
 }
 ```
 
+Autre exemple (backend test) :
+
+```jsx
+import "../styles/backend-test.css";
+
+export default function BackendTest() {
+  return (
+    <section className="backend-test-page">
+      <h1>Backend Test</h1>
+    </section>
+  );
+}
+```
+
 ## 2) Déclarer la route
 
 Modifier `src/common/App.jsx`.
