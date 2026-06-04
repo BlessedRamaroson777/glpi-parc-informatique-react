@@ -31,13 +31,15 @@ body {
 }
 
 .backoffice,
+.common,
 .frontoffice {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.backoffice-menu {
+.backoffice-menu,
+.common-menu {
   display: flex;
   gap: 16px;
   align-items: center;
@@ -46,7 +48,8 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.backoffice-menu a {
+.backoffice-menu a,
+.common-menu a {
   color: var(--primary-dark);
   text-decoration: none;
   font-weight: 600;
@@ -54,11 +57,18 @@ body {
   border-radius: 6px;
 }
 
-.backoffice-menu a:hover {
+.backoffice-menu a:hover,
+.common-menu a:hover {
   background: rgba(47, 95, 168, 0.12);
 }
 
+.backoffice-menu a.active,
+.common-menu a.active {
+  background: rgba(47, 95, 168, 0.18);
+}
+
 .backoffice-content,
+.common-content,
 .frontoffice-content {
   flex: 1;
   padding: 32px 24px;
