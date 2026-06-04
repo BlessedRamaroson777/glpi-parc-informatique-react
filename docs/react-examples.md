@@ -49,3 +49,10 @@ File: docs/examples/07-form-post.jsx
 
 ### Filter list (button or search)
 File: docs/examples/11-filter-list.jsx
+
+### Filter list (button only)
+File: docs/examples/12-filter-button.jsx
+
+## Reinitialisation
+- Page: src/common/pages/Reinitialisation.jsx
+- Guide: docs/reinitialisation.md
