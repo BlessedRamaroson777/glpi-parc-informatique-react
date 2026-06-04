@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import CommonApp from "./common/App.jsx";
-import "./index.css";
+import "./common/styles/base.css";
+import "./common/styles/layout.css";
 
 const rootElement = document.getElementById("root");
 

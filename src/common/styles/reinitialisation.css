@@ -1,0 +1,55 @@
+.reinit-page .form-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.reinit-page label {
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reinit-page strong {
+  display: block;
+  margin: 16px 0 8px;
+}
+
+.reinit-page input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.reinit-page .button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.reinit-page button {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-dark);
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reinit-page button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reinit-page .status {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #eef2fb;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+}
