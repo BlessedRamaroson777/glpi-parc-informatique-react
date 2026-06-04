@@ -16,10 +16,13 @@ File: docs/examples/09-refresh-token.jsx
 ### Authenticated fetch (auto refresh + retry)
 File: docs/examples/10-api-request.jsx
 
-### Notes tokens GLPI (v1 vs v2)
-- A confirmer: GLPI v1 retourne souvent `session_token`.
-- A confirmer: GLPI v2 expose plutot `accessToken` + `refreshToken`.
-- Donne-moi les endpoints exacts pour corriger ces noms.
+### Notes tokens GLPI (OAuth)
+- Access token: utilise pour appeler l'API (Authorization: Bearer ...).
+- Refresh token: utilise pour obtenir un nouvel access token quand il expire.
+- `expires_in`: duree de vie de l'access token (ex: 3600s = 1h).
+- Le refresh token a sa propre duree de vie (ex: 1 mois).
+- Quand l'access token expire, on fait un refresh et on re-tente la requete.
+- Quand le refresh token expire, l'utilisateur doit se reconnecter.
 
 ## UI examples
 
