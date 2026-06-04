@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { apiRequest } from "../services/authService.jsx";
+import "../styles/reinitialisation.css";
 
 const ENTITY_GROUPS = [
   {
@@ -257,7 +258,7 @@ export default function Reinitialisation() {
   }
 
   return (
-    <section id="reinitialisation">
+    <section id="reinitialisation" className="reinit-page">
       <h1>Reinitialisation</h1>
       <p>Selectionne les entites a purger, puis lance la reinitialisation.</p>
 
