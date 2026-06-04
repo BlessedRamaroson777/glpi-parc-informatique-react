@@ -13,7 +13,7 @@ export default function GlpiLoginForm() {
     try {
       const data = await login({ username, password });
       saveTokens({
-        accessToken: data.session_token || data.accessToken,
+        accessToken: data.access_token || data.accessToken || data.session_token,
         refreshToken: data.refresh_token || data.refreshToken,
         expiresInSeconds: data.expires_in || data.expiresIn || 3600,
       });
