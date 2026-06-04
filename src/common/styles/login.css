@@ -1,0 +1,32 @@
+.login-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-page form {
+  display: grid;
+  gap: 12px;
+}
+
+.login-page label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.login-page input {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.login-page button {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-dark);
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
