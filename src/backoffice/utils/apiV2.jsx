@@ -76,16 +76,23 @@ const apiV2 = {
     patch: (e, b) => request('PATCH', e, b),
     put: (e, b) => request('PUT', e, b),
     delete: (e) => request('DELETE', e),
-    count: async (e, p) => {
-        const params = { ...(p || {}), limit: 0 }
-        const url = new URL(e, window.location.origin)
-        Object.entries(params).forEach(([k, v]) => url.searchParams.append(k, String(v)))
+    count: async (endpoint, filter = '') => {
+        const url = new URL(endpoint, window.location.origin)
+        url.searchParams.append('limit', '0')
+        if (filter) url.searchParams.append('filter', filter)
+
+        const token = getAccessToken()
         const response = await fetch(url.toString(), {
             method: 'GET',
-            headers: buildHeaders('GET'),
+            headers: {
+                Accept: 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
         })
-        const range = response.headers.get('Content-Range') // "0-0/9"
-        return range ? parseInt(range.split('/')[1]) : 0
+
+        const range = response.headers.get('Content-Range')
+        if (!range) return 0
+        return parseInt(range.split('/')[1]) || 0
     },
 }
 
