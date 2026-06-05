@@ -18,6 +18,7 @@ export default function RefreshTokenButton() {
     } catch (error) {
       setStatus(`Erreur: ${error.message}`);
     }
+    console.log("Refresh token status:", status);
   }
 
   return (
@@ -25,7 +26,6 @@ export default function RefreshTokenButton() {
       <button type="button" className="refresh-token-button" onClick={handleRefresh}>
         Refresh token 
       </button>
-      {status && <p>{status}</p>}
     </div>
   );
 }

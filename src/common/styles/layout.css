@@ -6,11 +6,23 @@
 
 .common-menu {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
   background: linear-gradient(90deg, #dbe3f4 0%, #eef2fb 100%);
   border-bottom: 1px solid var(--border);
+}
+
+.menu-links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.menu-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .common-menu a {
