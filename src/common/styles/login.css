@@ -30,24 +30,13 @@
   font-weight: 600;
   cursor: pointer;
 }
+
 .logout-button {
-  padding: 10px 16px;
-  border: none;
+  padding: 10px 14px;
   border-radius: 6px;
+  border: 1px solid black;
+  background: rgb(173, 16, 16);
+  color: #ffffff;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 14px;
-}
-
-.logout-button:hover {
-  opacity: 0.9;
-}
-
-.logout-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.logout-container {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px;
 }

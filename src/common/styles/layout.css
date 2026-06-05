@@ -35,3 +35,13 @@
   flex-direction: column;
   gap: 24px;
 }
+
+.refresh-token-button {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--primary-dark);
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -22,8 +22,8 @@ export default function RefreshTokenButton() {
 
   return (
     <div>
-      <button type="button" onClick={handleRefresh}>
-        Refresh token
+      <button type="button" className="refresh-token-button" onClick={handleRefresh}>
+        Refresh token 
       </button>
       {status && <p>{status}</p>}
     </div>

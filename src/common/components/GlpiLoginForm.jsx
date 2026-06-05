@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, saveTokens } from "../services/authService.jsx";
-import RefreshTokenButton from "./RefreshTokenButton.jsx";
 
 export default function GlpiLoginForm() {
   const [username, setUsername] = useState("");
@@ -31,7 +30,6 @@ export default function GlpiLoginForm() {
 
   return (
     <div>
-      <RefreshTokenButton />
       <form onSubmit={handleSubmit}>
         <label htmlFor="glpi-username">Utilisateur</label>
         <input

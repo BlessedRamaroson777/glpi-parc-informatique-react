@@ -133,8 +133,8 @@ const ENTITY_GROUPS = [
       {
         key: "projects",
         label: "Projets",
-        listPath: "/api.php/v2/Management/Project",
-        deletePath: "/api.php/v2/Management/Project",
+        listPath: "/api.php/v2/Project",
+        deletePath: "/api.php/v2/Project",
       },
     ],
   },
