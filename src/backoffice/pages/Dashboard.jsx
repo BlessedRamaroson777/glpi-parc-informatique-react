@@ -1,8 +1,10 @@
-export default function Home() {
+import React from "react";
+import "../styles/dashboard.css";
+export default function Dashboard() {
   return (
-    <section id="home">
-      <h1>Home</h1>
-      <p>Page simple pour demarrer.</p>
+    <section id="dashboard">
+      <h1>Dashboard</h1>
+      <p>Bienvenue dans votre espace de gestion.</p>
     </section>
   );
 }

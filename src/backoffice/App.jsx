@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import MainLayout from "./layouts/MainLayout.jsx";
 import BackendTest from "./pages/BackendTest.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Tickets from "./pages/Tickets.jsx";
 import Login from "./pages/Login.jsx";
 import Reinitialisation from "./pages/Reinitialisation.jsx";
 import Import from "./pages/Import.jsx";
@@ -23,6 +24,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets"
+            element={
+              <ProtectedRoute>
+                <Tickets />
               </ProtectedRoute>
             }
           />
