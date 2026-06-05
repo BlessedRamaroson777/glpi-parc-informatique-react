@@ -1,10 +1,10 @@
-.common {
+.backoffice {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.common-menu {
+.backoffice-menu {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -25,7 +25,7 @@
   align-items: center;
 }
 
-.common-menu a {
+.backoffice-menu a {
   color: var(--primary-dark);
   text-decoration: none;
   font-weight: 600;
@@ -33,11 +33,11 @@
   border-radius: 6px;
 }
 
-.common-menu a:hover {
+.backoffice-menu a:hover {
   background: rgba(47, 95, 168, 0.12);
 }
 
-.common-content {
+.backoffice-content {
   flex: 1;
   padding: 32px 24px;
   max-width: 960px;

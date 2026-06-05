@@ -2,9 +2,9 @@ import Menu from "./Menu.jsx";
 
 export default function MainLayout({ children }) {
   return (
-    <div className="common">
+    <div className="backoffice">
       <Menu />
-      <main className="common-content">{children}</main>
+      <main className="backoffice-content">{children}</main>
     </div>
   );
 }

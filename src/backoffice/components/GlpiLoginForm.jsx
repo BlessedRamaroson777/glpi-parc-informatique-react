@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, saveTokens } from "../services/authService.jsx";
+import { USER_ADMIN } from "../constants/apiConfig.jsx";
 
 export default function GlpiLoginForm() {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(USER_ADMIN);
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const navigate = useNavigate();
@@ -31,15 +32,15 @@ export default function GlpiLoginForm() {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <label htmlFor="glpi-username">Utilisateur</label>
+        {/* <label htmlFor="glpi-username">Utilisateur</label>
         <input
         id="glpi-username"
         value={username}
         onChange={(event) => setUsername(event.target.value)}
         placeholder="User"
-        />
+        /> */}
 
-        <label htmlFor="glpi-password">Mot de passe</label>
+        <label htmlFor="glpi-password">Code</label>
         <input
         id="glpi-password"
         type="password"
