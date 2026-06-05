@@ -44,10 +44,10 @@ function normalizeRange(range) {
 }
 
 async function request(method, endpoint, body, params, extra = {}) {
-    if (!config.baseUrl) {
-        throw new Error('API v1 baseUrl is not configured')
-    }
-    const url = new URL(`${config.baseUrl.replace(/\/$/, '')}/${endpoint}`)
+    const base = config.baseUrl
+        ? config.baseUrl.replace(/\/$/, '')
+        : window.location.origin  // ← fallback proxy
+    const url = new URL(`${base}/${endpoint}`)
 
     if (params && typeof params === 'object') {
         Object.entries(params).forEach(([key, value]) => {
