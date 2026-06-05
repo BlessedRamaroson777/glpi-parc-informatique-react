@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { login, saveTokens } from "../services/authService.jsx";
 import RefreshTokenButton from "./RefreshTokenButton.jsx";
 
@@ -21,7 +21,7 @@ export default function GlpiLoginForm() {
         expiresInSeconds: data.expires_in || data.expiresIn || 3600,
       });
       setStatus("OK");
-      setPassword("");
+      // setPassword("");
       navigate("/", { replace: true });
 
     } catch (error) {

@@ -30,3 +30,24 @@
   font-weight: 600;
   cursor: pointer;
 }
+.logout-button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-button:hover {
+  opacity: 0.9;
+}
+
+.logout-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.logout-container {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}
