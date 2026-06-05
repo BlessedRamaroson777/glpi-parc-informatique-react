@@ -3,44 +3,50 @@ class Ticket {
         this.id = data.id ?? null
 
         // ── CORE FIELDS ─────────────────────────────
-        this.name = data.name ?? ''
-        this.content = data.content ?? ''
+        this.name       = data.name       ?? ''
+        this.content    = data.content    ?? ''
         this.external_id = data.external_id ?? null
+        this.team = data.team ?? []
 
-        // ── GLPI IDS (IMPORTANT: pas d'objets imbriqués) ──
-        this.status = this._normalizeStatus(data.status)
-        this.priority = data.priority ?? null
-        this.urgency = data.urgency ?? null
-        this.impact = data.impact ?? null
-        this.type = data.type ?? null
+        // ── GLPI IDS ────────────────────────────────
+        this.status   = this._normalizeStatus(data.status)
+        this.priority = this._normalizeId(data.priority)
+        this.urgency  = this._normalizeId(data.urgency)
+        this.impact   = this._normalizeId(data.impact)
+        this.type     = this._normalizeId(data.type)
 
         this.is_deleted = data.is_deleted ?? false
 
-        // ── RELATIONS GLPI (IDS UNIQUEMENT) ─────────
-        this.users_id_recipient = data.users_id_recipient ?? null
-        this.users_id_lastupdater = data.users_id_lastupdater ?? null
-        this.itilcategories_id = data.itilcategories_id ?? null
-        this.locations_id = data.locations_id ?? null
-        this.entities_id = data.entities_id ?? null
+        // ── RELATIONS (corrected key names) ─────────
+        this.users_id_recipient   = this._normalizeId(data.user_recipient)   // was data.users_id_recipient
+        this.users_id_lastupdater = this._normalizeId(data.user_editor)      // was data.users_id_lastupdater
+        this.itilcategories_id    = this._normalizeId(data.category)         // was data.itilcategories_id
+        this.locations_id         = this._normalizeId(data.location)         // was data.locations_id
+        this.entities_id          = this._normalizeId(data.entity)           // was data.entities_id
+        this.request_type         = this._normalizeId(data.request_type)     // new field
 
-        // ── DATES ────────────────────────────────────
+        // ── DATES (corrected key names) ──────────────
         this.date_creation = data.date_creation ?? null
-        this.date_mod = data.date_mod ?? null
-        this.solvedate = data.solvedate ?? null
-        this.closedate = data.closedate ?? null
+        this.date_mod      = data.date_mod      ?? null
+        this.solvedate     = data.date_solve    ?? null  // was data.solvedate
+        this.closedate     = data.date_close    ?? null  // was data.closedate
 
         // ── SLA ──────────────────────────────────────
-        this.time_to_resolve = data.time_to_resolve ?? null
-        this.time_to_own = data.time_to_own ?? null
+        this.time_to_resolve = data.sla_ttr ?? null  // was data.time_to_resolve
+        this.time_to_own     = data.sla_tto ?? null  // was data.time_to_own
     }
 
     // ─────────────────────────────────────────────
     // NORMALISATION GLPI STATUS
     // ─────────────────────────────────────────────
     _normalizeStatus(status) {
-        if (!status) return 1
-        if (typeof status === 'object') return status.id ?? 1
-        return status
+        return this._normalizeId(status) ?? 1
+    }
+
+    _normalizeId(value) {
+        if (value === null || value === undefined) return null
+        if (typeof value === 'object') return value.id ?? null
+        return value
     }
 
     // ─────────────────────────────────────────────

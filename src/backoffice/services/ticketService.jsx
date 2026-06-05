@@ -1,87 +1,35 @@
-import { apiRequest } from "../utils/apiV2.jsx"
-import Ticket from "../entities/Ticket.jsx"
+import apiV2 from "../utils/apiV2.jsx"
 
-const BASE = "Assistance/Ticket"
+const BASE = "/api.php/v2.3/Assistance/Ticket"
 
-// ───────────────────────── GET ALL ─────────────────────────
-export async function getTickets(params = {}) {
-    return apiRequest(BASE, {
-        method: "GET",
-        ...params,
+// GET ALL
+export function getTickets(params = {}) {
+    return apiV2.get(BASE, params)
+}
+
+// GET BY ID
+export function getTicketById(id) {
+    return apiV2.get(`${BASE}/${id}`)
+}
+
+// DELETE
+export function deleteTicket(id, purge = false) {
+    return apiV2.delete(`${BASE}/${id}${purge ? '?purge=true' : ''}`)
+}
+
+// CREATE
+export function createTicket(ticket) {
+    return apiV2.post(BASE, ticket.toPayload())
+}
+
+// UPDATE
+export function updateTicket(ticket) {
+    return apiV2.patch(`${BASE}/${ticket.id}`, ticket.toPayload())
+}
+
+// SEARCH
+export function searchTickets(name) {
+    return apiV2.get(BASE, {
+        filter: `name=*${name}*`
     })
-}
-
-// ───────────────────────── GET BY ID ─────────────────────────
-export async function getTicketById(id) {
-    if (!id) throw new Error("ID requis")
-
-    return apiRequest(`${BASE}/${id}`, {
-        method: "GET",
-    })
-}
-
-// ───────────────────────── DELETE ─────────────────────────
-export async function deleteTicket(id, purge = false) {
-    if (!id) throw new Error("ID requis")
-
-    return apiRequest(
-        `${BASE}/${id}${purge ? "?purge=true" : ""}`,
-        {
-            method: "DELETE",
-        }
-    )
-}
-
-// ───────────────────────── CREATE ─────────────────────────
-export async function createTicket(ticket) {
-    return apiRequest(BASE, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(ticket.toPayload()),
-    })
-}
-
-// ───────────────────────── UPDATE ─────────────────────────
-export async function updateTicket(ticket) {
-    if (!ticket.id) throw new Error("ID requis")
-
-    return apiRequest(`${BASE}/${ticket.id}`, {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(ticket.toPayload()),
-    })
-}
-
-// ───────────────────────── SEARCH BY NAME ─────────────────────────
-export async function getTicketsByName(name) {
-    if (!name) return []
-
-    return apiRequest(
-        `${BASE}?filter=name=*${encodeURIComponent(name)}*`,
-        {
-            method: "GET",
-        }
-    )
-}
-
-// ───────────────────────── GET FULL TICKET ─────────────────────────
-export async function getTicketFull(id) {
-    const ticket = await getTicketById(id)
-
-    const [followups, costs, documents] = await Promise.all([
-        apiRequest(`Assistance/Ticket/${id}/Timeline/Followup`),
-        apiRequest(`Assistance/Ticket/${id}/Cost`),
-        apiRequest(`Assistance/Ticket/${id}/Timeline/Document`)
-    ])
-
-    return {
-        ticket,
-        followups,
-        costs,
-        documents
-    }
 }

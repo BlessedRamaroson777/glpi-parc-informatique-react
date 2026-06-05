@@ -8,6 +8,7 @@ export default function Menu() {
       <div className="menu-links">
         <h1>Backoffice</h1>
         <Link to="/">Dashboard</Link>
+        <Link to="/tickets">Tickets</Link>
         <Link to="/backend-test">Backend Test</Link>
         <Link to="/reinitialisation">Reinitialisation</Link>
         <Link to="/import">Import</Link>

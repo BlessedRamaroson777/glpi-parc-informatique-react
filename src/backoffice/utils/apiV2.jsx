@@ -1,9 +1,7 @@
-// GLPI API v2 client wrapper
-// Configure once via setConfig before using.
+// GLPI API v2 client wrapper (PROXY MODE)
+import { getAccessToken } from "../services/authService" 
 
 let config = {
-    baseUrl: '',
-    accessToken: '',
     timeoutMs: 30000,
 }
 
@@ -11,16 +9,16 @@ export function setConfig(nextConfig = {}) {
     config = { ...config, ...nextConfig }
 }
 
-function buildHeaders(extra = {}) {
-    const headers = {
+function buildHeaders(method = 'GET', extra = {}) {
+    const token = getAccessToken()
+    const isBodyMethod = ['POST', 'PATCH', 'PUT'].includes(method.toUpperCase())
+
+    return {
         Accept: 'application/json',
-        'Content-Type': 'application/json',
+        ...(isBodyMethod ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...extra,
     }
-
-    if (config.accessToken) headers.Authorization = `Bearer ${config.accessToken}`
-
-    return headers
 }
 
 function parseResponseText(text) {
@@ -33,44 +31,38 @@ function parseResponseText(text) {
 }
 
 async function request(method, endpoint, body, params, extra = {}) {
-    if (!config.baseUrl) {
-        throw new Error('API v2 baseUrl is not configured')
-    }
-    const url = new URL(`${config.baseUrl.replace(/\/$/, '')}/${endpoint}`)
 
-    if (params && typeof params === 'object') {
-        Object.entries(params).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-                url.searchParams.append(key, String(value))
+    const url = new URL(endpoint, window.location.origin)
+
+    if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) {
+                url.searchParams.append(k, String(v))
             }
         })
     }
 
-    const headers = buildHeaders(extra.headers)
-    if (body instanceof FormData) {
-        delete headers['Content-Type']
-    }
-
     const controller = new AbortController()
-    const timeoutMs = Number.isFinite(extra.timeoutMs) ? extra.timeoutMs : config.timeoutMs
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs)
 
     const options = {
         method,
-        headers,
+        headers: buildHeaders(method, extra.headers),  // <-- pass method here
         signal: controller.signal,
     }
 
-    if (body !== undefined && body !== null) {
+    if (body) {
         options.body = body instanceof FormData ? body : JSON.stringify(body)
     }
 
     try {
         const response = await fetch(url.toString(), options)
         const text = await response.text()
+
         if (!response.ok) {
             throw new Error(`API v2 error ${response.status}: ${text}`)
         }
+
         return response.status === 204 ? null : parseResponseText(text)
     } finally {
         clearTimeout(timeoutId)
@@ -79,11 +71,11 @@ async function request(method, endpoint, body, params, extra = {}) {
 
 const apiV2 = {
     setConfig,
-    get: (endpoint, params) => request('GET', endpoint, null, params),
-    post: (endpoint, body, options) => request('POST', endpoint, body, null, options),
-    patch: (endpoint, body, options) => request('PATCH', endpoint, body, null, options),
-    put: (endpoint, body, options) => request('PUT', endpoint, body, null, options),
-    delete: (endpoint) => request('DELETE', endpoint),
+    get: (e, p) => request('GET', e, null, p),
+    post: (e, b) => request('POST', e, b),
+    patch: (e, b) => request('PATCH', e, b),
+    put: (e, b) => request('PUT', e, b),
+    delete: (e) => request('DELETE', e),
 }
 
 export default apiV2

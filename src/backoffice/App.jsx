@@ -8,6 +8,7 @@ import Tickets from "./pages/Tickets.jsx";
 import Login from "./pages/Login.jsx";
 import Reinitialisation from "./pages/Reinitialisation.jsx";
 import Import from "./pages/Import.jsx";
+import TicketDetail from "./pages/TicketDetail.jsx"
 
 export default function App() {
   return (
@@ -32,6 +33,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Tickets />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tickets/:id"
+            element={
+              <ProtectedRoute>
+                <TicketDetail />
               </ProtectedRoute>
             }
           />
