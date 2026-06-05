@@ -9,6 +9,7 @@ export default function Menu() {
         <Link to="/">Home</Link>
         <Link to="/backend-test">Backend Test</Link>
         <Link to="/reinitialisation">Reinitialisation</Link>
+        <Link to="/import">Import</Link>
       </div>
 
       <div className="menu-actions">

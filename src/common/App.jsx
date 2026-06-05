@@ -6,6 +6,7 @@ import BackendTest from "./pages/BackendTest.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Reinitialisation from "./pages/Reinitialisation.jsx";
+import Import from "./pages/Import.jsx";
 
 export default function App() {
   return (
@@ -39,6 +40,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Reinitialisation />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/import"
+            element={
+              <ProtectedRoute>
+                <Import />
               </ProtectedRoute>
             }
           />
