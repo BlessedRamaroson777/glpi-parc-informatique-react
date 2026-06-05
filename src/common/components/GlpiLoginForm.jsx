@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { login, saveTokens } from "../services/authService.jsx";
 import RefreshTokenButton from "./RefreshTokenButton.jsx";
 
@@ -6,6 +7,7 @@ export default function GlpiLoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
+  const navigate = useNavigate();
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -20,6 +22,8 @@ export default function GlpiLoginForm() {
       });
       setStatus("OK");
       setPassword("");
+      navigate("/", { replace: true });
+
     } catch (error) {
       setStatus(`Erreur: ${error.message}`);
     }

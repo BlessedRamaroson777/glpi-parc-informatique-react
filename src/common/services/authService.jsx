@@ -6,7 +6,8 @@ const EXPIRES_AT_KEY = "glpi_access_expires_at";
 
 const CLIENT_ID = import.meta.env.VITE_GLPI_CLIENT_ID || "";
 const CLIENT_SECRET = import.meta.env.VITE_GLPI_CLIENT_SECRET || "";
-const OAUTH_TOKEN_PATH = "/api.php/v2/oauth/token";
+const OAUTH_TOKEN_PATH = "/api.php/token";
+
 
 export function saveTokens({ accessToken, refreshToken, expiresInSeconds }) {
   if (accessToken) {
@@ -82,6 +83,7 @@ export async function login({ username, password }) {
     client_secret: CLIENT_SECRET,
     username,
     password,
+    scope: "api",
   });
 
   const response = await fetch(buildUrl(OAUTH_TOKEN_PATH), {
