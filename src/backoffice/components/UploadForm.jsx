@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import FileInput from "./FileInput";
-import "../styles/uploadForm.css";
+import "../styles/UploadForm.css";
 
 export default function UploadForm() {
   const file1Ref = useRef(null);

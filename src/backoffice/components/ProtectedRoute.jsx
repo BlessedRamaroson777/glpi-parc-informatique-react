@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children }) {
   const isAuthed = Boolean(accessToken) && !isTokenExpired();
 
   if (!isAuthed) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return children;

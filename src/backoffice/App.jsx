@@ -15,7 +15,7 @@ export default function BackofficeApp() {
     <MainLayout>
       <Routes>
         <Route
-          path="/"
+          index
           element={
             <ProtectedRoute>
               <Dashboard />
@@ -24,7 +24,7 @@ export default function BackofficeApp() {
         />
 
         <Route
-          path="/tickets"
+          path="tickets"
           element={
             <ProtectedRoute>
               <Tickets />
@@ -33,7 +33,7 @@ export default function BackofficeApp() {
         />
 
         <Route
-          path="/tickets/:id"
+          path="tickets/:id"
           element={
             <ProtectedRoute>
               <TicketDetail />
@@ -41,10 +41,10 @@ export default function BackofficeApp() {
           }
         />
 
-        <Route path="/login" element={<Login />} />
+        <Route path="login" element={<Login />} />
 
         <Route
-          path="/backend-test"
+          path="backend-test"
           element={
             <ProtectedRoute>
               <BackendTest />
@@ -53,7 +53,7 @@ export default function BackofficeApp() {
         />
 
         <Route
-          path="/reinitialisation"
+          path="reinitialisation"
           element={
             <ProtectedRoute>
               <Reinitialisation />
@@ -62,7 +62,7 @@ export default function BackofficeApp() {
         />
 
         <Route
-          path="/import"
+          path="import"
           element={
             <ProtectedRoute>
               <Import />

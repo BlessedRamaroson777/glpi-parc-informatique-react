@@ -22,7 +22,7 @@ export default function GlpiLoginForm() {
       });
       setStatus("OK");
       // setPassword("");
-      navigate("/", { replace: true });
+      navigate("/admin", { replace: true });
 
     } catch (error) {
       setStatus(`Erreur: ${error.message}`);

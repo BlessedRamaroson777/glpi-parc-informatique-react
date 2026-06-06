@@ -58,7 +58,7 @@ export default function Tickets() {
         {tickets.map(ticket => (
           <li
             key={ticket.id}
-            onClick={() => navigate(`/tickets/${ticket.id}`, { state: { ticket } })}
+            onClick={() => navigate(`/admin/tickets/${ticket.id}`, { state: { ticket } })}
             className="ticket-list-item"
           >
             <div className="ticket-item-left">

@@ -6,12 +6,14 @@ export default function Menu() {
   return (
     <nav className="backoffice-menu">
       <div className="menu-links">
-        <h1>Backoffice</h1>
-        <Link to="/">Dashboard</Link>
-        <Link to="/tickets">Tickets</Link>
-        <Link to="/backend-test">Backend Test</Link>
-        <Link to="/reinitialisation">Reinitialisation</Link>
-        <Link to="/import">Import</Link>
+        <h1>
+          <Link to="/">Dashboard</Link>
+        </h1>
+        <Link to="/admin">Dashboard</Link>
+        <Link to="/admin/tickets">Tickets</Link>
+        <Link to="/admin/backend-test">Backend Test</Link>
+        <Link to="/admin/reinitialisation">Reinitialisation</Link>
+        <Link to="/admin/import">Import</Link>
       </div>
 
       <div className="menu-actions">

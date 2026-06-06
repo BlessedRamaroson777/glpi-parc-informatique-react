@@ -1,3 +1,5 @@
+import "../styles/base.css";
+import "../styles/layout.css";
 import Menu from "./Menu.jsx";
 
 export default function MainLayout({ children }) {
