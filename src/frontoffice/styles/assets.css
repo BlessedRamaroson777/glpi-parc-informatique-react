@@ -1,0 +1,148 @@
+.assets-page {
+    padding: 1.5rem;
+}
+
+/* HEADER */
+.assets-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.assets-header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111;
+}
+
+.assets-header span {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.assets-header button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #6b7280;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* FILTERS */
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    padding: 14px;
+    margin-bottom: 1.2rem;
+
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-field label {
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.filter-field input,
+.filter-field select {
+    padding: 6px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    background: white;
+    outline: none;
+}
+
+/* LIST */
+.assets-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.asset-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+/* LEFT */
+.asset-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.asset-id {
+    font-size: 11px;
+    color: #9ca3af;
+    font-family: monospace;
+}
+
+.asset-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111;
+}
+
+.asset-meta {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* RIGHT */
+.asset-right {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.date {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+/* STATES */
+.loading,
+.empty {
+    font-size: 14px;
+    color: #9ca3af;
+}

@@ -9,6 +9,7 @@ export default function Menu() {
         <h1>
           <Link to="/">Frontoffice</Link>
         </h1>
+        <Link to="/customer/assets">Assets</Link>
       </div>
 
       {/* <div className="menu-actions">
