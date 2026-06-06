@@ -1,5 +1,5 @@
 // GLPI API v2 client wrapper (PROXY MODE)
-import { getAccessToken } from "../services/authService" 
+import { getAccessToken } from "../../common/services/authService" 
 
 let config = {
     timeoutMs: 30000,

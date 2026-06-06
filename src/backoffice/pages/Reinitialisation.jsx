@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { apiRequest } from "../services/authService.jsx";
+import { apiRequest } from "../../common/services/authService.jsx";
 import "../styles/reinitialisation.css";
 
 const ENTITY_GROUPS = [

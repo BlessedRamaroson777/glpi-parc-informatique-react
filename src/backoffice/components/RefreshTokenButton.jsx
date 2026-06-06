@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { refreshAccessToken, saveTokens } from "../services/authService.jsx";
+import { refreshAccessToken, saveTokens } from "../../common/services/authService.jsx";
 
 export default function RefreshTokenButton() {
   const [status, setStatus] = useState("");

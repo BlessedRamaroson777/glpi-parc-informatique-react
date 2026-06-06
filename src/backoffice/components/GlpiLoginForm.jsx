@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, saveTokens } from "../services/authService.jsx";
+import { login, saveTokens } from "../../common/services/authService.jsx";
 import { USER_ADMIN } from "../constants/apiConfig.jsx";
 
 export default function GlpiLoginForm() {

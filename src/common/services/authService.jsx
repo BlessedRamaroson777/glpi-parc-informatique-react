@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../constants/apiConfig.jsx";
+import { API_BASE_URL } from "../../backoffice/constants/apiConfig.jsx";
 import apiV1 from "../utils/apiV1.jsx"
 
 const TOKEN_KEY = "glpi_access_token";

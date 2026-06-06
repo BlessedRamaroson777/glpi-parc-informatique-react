@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { getTickets, searchTickets } from "../services/ticketService.jsx";
+import { getTickets, searchTickets } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
 import "../styles/tickets.css"; // Importation du même fichier CSS
 

@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { getAccessToken, isTokenExpired } from "../services/authService.jsx";
+import { getAccessToken, isTokenExpired } from "../../common/services/authService.jsx";
 
 export default function ProtectedRoute({ children }) {
   const accessToken = getAccessToken();

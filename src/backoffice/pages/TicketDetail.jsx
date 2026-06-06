@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { getTicketById, getTicketItems } from "../services/ticketService.jsx";
+import { getTicketById, getTicketItems } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
 import "../styles/tickets.css"; // Importation du fichier CSS
 
