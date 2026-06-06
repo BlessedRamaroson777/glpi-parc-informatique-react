@@ -1,16 +1,8 @@
-import apiV2 from "../utils/apiV2.jsx"
+import apiV2 from "../../common/utils/apiV2.jsx"
+import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 
 const BASE_V2 = "/api.php/v2.3"
 
-const ASSET_TYPES = [
-    { key: "Computer",         label: "Ordinateurs" },
-    { key: "Monitor",          label: "Moniteurs" },
-    { key: "Printer",          label: "Imprimantes" },
-    { key: "Phone",            label: "Téléphones" },
-    { key: "NetworkEquipment", label: "Équipements réseau" },
-    { key: "Software",         label: "Logiciels" },
-    { key: "Peripheral",       label: "Périphériques" },
-]
 
 async function countAsset(type) {
     const url = new URL(`${BASE_V2}/Assets/${type}`, window.location.origin)

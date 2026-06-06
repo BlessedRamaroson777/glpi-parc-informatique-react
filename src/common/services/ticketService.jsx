@@ -1,4 +1,4 @@
-import apiV2 from "../../backoffice/utils/apiV2.jsx"
+import apiV2 from "../utils/apiV2.jsx"
 import apiV1 from "../utils/apiV1.jsx"
 
 const BASE = "/api.php/v2.3/Assistance/Ticket"

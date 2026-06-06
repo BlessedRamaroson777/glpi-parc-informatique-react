@@ -1,4 +1,4 @@
-import apiV2 from '../../backoffice/utils/apiV2.jsx'
+import apiV2 from '../utils/apiV2.jsx'
 import ComputerInfocom from './ComputerInfocom.jsx'
 
 class Computer {

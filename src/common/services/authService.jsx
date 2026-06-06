@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../../backoffice/constants/apiConfig.jsx";
+import { API_BASE_URL } from "../constants/apiConfig.jsx";
 import apiV1 from "../utils/apiV1.jsx"
 
 const TOKEN_KEY = "glpi_access_token";
@@ -78,19 +78,19 @@ async function parseResponse(response) {
 }
 
 export async function login({ username, password }) {
-  const body = new URLSearchParams({
+  const body = {
     grant_type: "password",
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
     username,
     password,
     scope: "api",
-  });
+  };
 
   const response = await fetch(buildUrl(OAUTH_TOKEN_PATH), {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
 
   return parseResponse(response);
@@ -110,17 +110,17 @@ export async function refreshAccessToken() {
     throw new Error("Missing refresh token");
   }
 
-  const body = new URLSearchParams({
+  const body = {
     grant_type: "refresh_token",
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
     refresh_token: refreshToken,
-  });
+  };
 
   const response = await fetch(buildUrl(OAUTH_TOKEN_PATH), {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
 
   return parseResponse(response);
