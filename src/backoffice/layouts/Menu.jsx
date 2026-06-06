@@ -7,7 +7,7 @@ export default function Menu() {
     <nav className="backoffice-menu">
       <div className="menu-links">
         <h1>
-          <Link to="/">Dashboard</Link>
+          <Link to="/">Backoffice</Link>
         </h1>
         <Link to="/admin">Dashboard</Link>
         <Link to="/admin/tickets">Tickets</Link>

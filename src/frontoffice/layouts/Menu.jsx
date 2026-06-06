@@ -6,8 +6,9 @@ export default function Menu() {
   return (
     <nav className="backoffice-menu">
       <div className="menu-links">
-        <h1>Frontoffice</h1>
-        <Link to="/">Dashboard</Link>
+        <h1>
+          <Link to="/">Frontoffice</Link>
+        </h1>
       </div>
 
       {/* <div className="menu-actions">

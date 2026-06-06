@@ -26,7 +26,7 @@ export default function SelectApp() {
 
           <a
             className="app-card customer-card"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/customer')}
           >
             {/* <div className="card-icon">👤</div> */}
             <h2>Client</h2>
