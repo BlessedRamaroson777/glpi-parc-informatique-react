@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getTickets, searchTickets } from "../services/ticketService.jsx";
-import Ticket from "../entities/Ticket.jsx";
+import Ticket from "../../common/entities/Ticket.jsx";
 import "../styles/tickets.css"; // Importation du même fichier CSS
 
 const STATUS_LABELS = { 1: "Nouveau", 2: "Attribué", 3: "Planifié", 4: "En attente", 5: "Résolu", 6: "Clos" };

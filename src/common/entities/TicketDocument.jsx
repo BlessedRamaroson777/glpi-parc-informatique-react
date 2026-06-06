@@ -1,4 +1,4 @@
-import apiV2 from '../utils/apiV2.jsx'
+import apiV2 from '../../backoffice/utils/apiV2.jsx'
 
 class TicketDocument {
     // 1. CORRECTION: Endpoint officiel avec le namespace Attachment/ requis par GLPI v2.3

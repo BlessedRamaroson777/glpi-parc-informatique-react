@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { getTicketById, getTicketItems } from "../services/ticketService.jsx";
-import Ticket from "../entities/Ticket.jsx";
+import Ticket from "../../common/entities/Ticket.jsx";
 import "../styles/tickets.css"; // Importation du fichier CSS
 
 const STATUS_LABELS   = { 1: "Nouveau", 2: "Attribué", 3: "Planifié", 4: "En attente", 5: "Résolu", 6: "Clos" };

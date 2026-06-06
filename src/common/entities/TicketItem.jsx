@@ -1,5 +1,5 @@
-import apiV1 from '../utils/apiV1.jsx'
-import apiV2 from '../utils/apiV2.jsx'
+import apiV1 from '../../backoffice/utils/apiV1.jsx'
+import apiV2 from '../../backoffice/utils/apiV2.jsx'
 
 class TicketItem {
 

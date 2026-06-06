@@ -1,4 +1,4 @@
-import apiV2 from '../utils/apiV2.jsx'
+import apiV2 from '../../backoffice/utils/apiV2.jsx'
 
 // Constantes pour le type d'authentification
 export const USER_AUTHTYPE = {

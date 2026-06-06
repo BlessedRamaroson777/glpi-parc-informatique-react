@@ -1,4 +1,4 @@
-import apiV2 from '../utils/apiV2.jsx'
+import apiV2 from '../../backoffice/utils/apiV2.jsx'
 
 // Mapping des rôles officiels de l'API GLPI v2.3
 export const GLPI_ACTOR_ROLES = {
