@@ -95,7 +95,16 @@ const apiV1 = {
     patch: (endpoint, body, options) => request('PATCH', endpoint, body, null, options),
     put: (endpoint, body, options) => request('PUT', endpoint, body, null, options),
     delete: (endpoint) => request('DELETE', endpoint),
-    initSession: (userToken) => request('POST', 'initSession', null, { user_token: userToken }),
+    initSession: async (userToken) => {
+        // 1. On fait la requête à GLPI
+        const response = await request('POST', 'initSession', null, { user_token: userToken });
+        
+        // 2. Si GLPI renvoie le token, on met à jour la config du wrapper automatiquement
+        if (response && response.session_token) {
+            setConfig({ sessionToken: response.session_token });
+        }
+        return response;
+    },
     killSession: () => request('GET', 'killSession'),
     search: (itemtype, params = {}) => request('GET', `search/${itemtype}`, null, params),
     getItem: (itemtype, id) => request('GET', `${itemtype}/${id}`),
