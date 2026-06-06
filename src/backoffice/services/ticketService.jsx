@@ -46,3 +46,10 @@ export async function searchTickets(name) {
         date_mod:      item[19],
     }))
 }
+
+export function getTicketItems(ticketId) {
+    return apiV1.get("Item_Ticket", {
+        "searchText[tickets_id]": ticketId,
+        "expand_dropdowns": true,
+    })
+}

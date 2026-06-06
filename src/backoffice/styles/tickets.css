@@ -68,7 +68,7 @@
 
 .ticket-title {
   font-size: 20px;
-  fontWeight: 600;
+  font-weight: 600;
   color: #111;
   margin-bottom: 1.5rem;
 }
@@ -241,4 +241,24 @@
 .search-input:focus {
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.linked-items-section {
+    margin-top: 1.5rem;
+}
+
+.linked-items-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.linked-item {
+    font-size: 13px;
+    padding: 6px 10px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
 }

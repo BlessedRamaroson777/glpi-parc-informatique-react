@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { getTicketById } from "../services/ticketService.jsx";
+import { getTicketById, getTicketItems } from "../services/ticketService.jsx";
 import Ticket from "../entities/Ticket.jsx";
 import "../styles/tickets.css"; // Importation du fichier CSS
 
@@ -32,6 +32,16 @@ export default function TicketDetail() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const [ticket, setTicket] = React.useState(state?.ticket ?? null);
+  const [items, setItems] = React.useState([])
+
+  React.useEffect(() => {
+      if (ticket?.id) {
+        getTicketItems(ticket.id).then(data => {
+          console.log("Items liés :", data)
+          setItems(data)
+      }).catch(() => setItems([]))
+      }
+  }, [ticket?.id])
 
   React.useEffect(() => {
     if (!ticket) {
@@ -91,6 +101,20 @@ export default function TicketDetail() {
           </ul>
         </div>
       )}
+
+      {items.length > 0 && (
+      <div className="linked-items-section">
+          <p className="section-title">Éléments liés</p>
+
+          <ul className="linked-items-list">
+              {items.map((item, i) => (
+                  <li key={i} className="linked-item">
+                      {item.itemtype} — {item.items_id}
+                  </li>
+              ))}
+          </ul>
+      </div>
+    )}
     </section>
   );
 }
