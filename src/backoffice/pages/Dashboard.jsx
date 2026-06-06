@@ -75,7 +75,7 @@ export default function Dashboard() {
 
             <Block title="Éléments" total={assets.total}>
                 {assets.byType
-                    .filter(a => a.count > 0)
+                    // .filter(a => a.count > 0)
                     .map(a => (
                         <Row
                             key={a.key}

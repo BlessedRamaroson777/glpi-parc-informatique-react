@@ -31,15 +31,29 @@ export async function getDashboardData() {
     async function count(endpoint, filter = '') {
         const url = new URL(endpoint, window.location.origin)
         url.searchParams.append("limit", "0")
-        if (filter) url.searchParams.append("filter", filter)
+        // RSQL filter format: wrap in parentheses and pass correctly encoded
+        if (filter) {
+            url.searchParams.append("filter", `(${filter})`)
+        }
+        
+        console.debug(`[Dashboard] Fetching ${endpoint} with filter: ${filter}`, url.toString())
+        
         const res = await fetch(url.toString(), {
             headers: {
                 Accept: "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             }
         })
+        
+        if (!res.ok) {
+            console.error(`[Dashboard] API error ${res.status} on ${endpoint}`)
+            return 0
+        }
+        
         const range = res.headers.get("Content-Range")
-        return range ? parseInt(range.split("/")[1]) || 0 : 0
+        const count = range ? parseInt(range.split("/")[1]) || 0 : 0
+        console.debug(`[Dashboard] ${endpoint} filter:"${filter}" → count: ${count}`)
+        return count
     }
 
     const BASE_TICKET = "/api.php/v2.3/Assistance/Ticket"
