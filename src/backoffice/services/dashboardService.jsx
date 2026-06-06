@@ -30,30 +30,33 @@ export async function getDashboardData() {
 
     async function count(endpoint, filter = '') {
         const url = new URL(endpoint, window.location.origin)
+
         url.searchParams.append("limit", "0")
-        // RSQL filter format: wrap in parentheses and pass correctly encoded
+
         if (filter) {
-            url.searchParams.append("filter", `(${filter})`)
+            url.searchParams.append("filter", filter)
         }
-        
-        console.debug(`[Dashboard] Fetching ${endpoint} with filter: ${filter}`, url.toString())
-        
+
         const res = await fetch(url.toString(), {
             headers: {
                 Accept: "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             }
         })
-        
-        if (!res.ok) {
-            console.error(`[Dashboard] API error ${res.status} on ${endpoint}`)
-            return 0
-        }
-        
+
+        console.log(
+            filter,
+            res.headers.get("Content-Range")
+        )
+
+        const data = await res.clone().json()
+        console.log(data)
+
         const range = res.headers.get("Content-Range")
-        const count = range ? parseInt(range.split("/")[1]) || 0 : 0
-        console.debug(`[Dashboard] ${endpoint} filter:"${filter}" → count: ${count}`)
-        return count
+
+        return range
+            ? parseInt(range.split("/")[1]) || 0
+            : 0
     }
 
     const BASE_TICKET = "/api.php/v2.3/Assistance/Ticket"
@@ -64,12 +67,6 @@ export async function getDashboardData() {
         ticketTotal,
         ticketIncident,
         ticketDemande,
-        ticketNouveau,
-        ticketAttribue,
-        ticketPlanifie,
-        ticketAttente,
-        ticketResolu,
-        ticketClos,
     ] = await Promise.all([
         Promise.all(ASSET_TYPES.map(async ({ key, label }) => ({
             key, label,
@@ -78,12 +75,6 @@ export async function getDashboardData() {
         count(BASE_TICKET),
         count(BASE_TICKET, "type==1"),
         count(BASE_TICKET, "type==2"),
-        count(BASE_TICKET, "status==1"),
-        count(BASE_TICKET, "status==2"),
-        count(BASE_TICKET, "status==3"),
-        count(BASE_TICKET, "status==4"),
-        count(BASE_TICKET, "status==5"),
-        count(BASE_TICKET, "status==6"),
     ])
 
     return {
@@ -93,15 +84,7 @@ export async function getDashboardData() {
         },
         tickets: {
             total: ticketTotal,
-            by_type:   { incident: ticketIncident, request: ticketDemande },
-            by_status: {
-                new:      ticketNouveau,
-                assigned: ticketAttribue,
-                planned:  ticketPlanifie,
-                waiting:  ticketAttente,
-                solved:   ticketResolu,
-                closed:   ticketClos,
-            }
+            by_type:   { incident: ticketIncident, request: ticketDemande }
         }
     }
 }

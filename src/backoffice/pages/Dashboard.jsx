@@ -102,17 +102,6 @@ export default function Dashboard() {
                     />
                 ))}
 
-                <div className="dashboard-spacing">
-                    <SectionTitle>Par statut</SectionTitle>
-                </div>
-
-                {TICKET_STATUS.map(({ key, label }) => (
-                    <Row
-                        key={key}
-                        label={label}
-                        value={tickets?.by_status?.[key] ?? 0}
-                    />
-                ))}
             </Block>
         </section>
     )
