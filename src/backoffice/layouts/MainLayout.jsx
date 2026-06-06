@@ -1,4 +1,4 @@
-import "../styles/base.css";
+import "../../common/styles/base.css";
 import "../styles/layout.css";
 import Menu from "./Menu.jsx";
 
