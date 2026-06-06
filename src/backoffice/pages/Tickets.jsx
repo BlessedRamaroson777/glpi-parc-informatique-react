@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { getTickets } from "../services/ticketService.jsx";
+import { getTickets, searchTickets } from "../services/ticketService.jsx";
 import Ticket from "../entities/Ticket.jsx";
 import "../styles/tickets.css"; // Importation du même fichier CSS
 
@@ -12,15 +12,47 @@ function Badge({ status }) {
 
 export default function Tickets() {
   const [tickets, setTickets] = React.useState([]);
+  const [search, setSearch] = React.useState("");
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    getTickets().then(data => setTickets(data.map(item => new Ticket(item))));
+    loadTickets();
   }, []);
+
+  async function loadTickets() {
+      const data = await getTickets();
+      setTickets(data.map(item => new Ticket(item)));
+  }
+
+  async function handleSearch(e) {
+    console.log("Recherche en cours pour :", e.target.value);
+    const value = e.target.value;
+    setSearch(value);
+
+    if (value.trim() === "") {
+      loadTickets();
+      return;
+    }
+    try {
+      const data = await searchTickets(value);
+      // CRUCIAL : Mapper les données reçues avec la classe Ticket
+      console.log("Données reçues de l'API :", data);
+      
+      setTickets(data.map(item => new Ticket(item)))
+    } catch (error) {
+      console.error("Erreur lors de la recherche :", error);
+      setTickets([]); // Évite de faire planter l'affichage en cas d'erreur API
+    }
+  }
 
   return (
     <section className="tickets-list-container">
       <h1 className="list-title">Tickets</h1>
+      {/* <input type="text" placeholder="Rechercher un ticket..." 
+        onChange={handleSearch} 
+        value={search}
+        className="search-input"
+      /> */}
 
       <ul className="tickets-list">
         {tickets.map(ticket => (

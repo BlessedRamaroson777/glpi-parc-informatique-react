@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../constants/apiConfig.jsx";
+import apiV1 from "../utils/apiV1.jsx"
 
 const TOKEN_KEY = "glpi_access_token";
 const REFRESH_KEY = "glpi_refresh_token";
@@ -94,6 +95,14 @@ export async function login({ username, password }) {
 
   return parseResponse(response);
 }
+
+// après avoir récupéré le token V2, ajouter :
+apiV1.setConfig({
+    baseUrl: "/apirest.php",
+    appToken: import.meta.env.VITE_GLPI_APP_TOKEN,
+})
+
+await apiV1.initSession(import.meta.env.VITE_GLPI_USER_TOKEN)
 
 export async function refreshAccessToken() {
   const refreshToken = getRefreshToken();

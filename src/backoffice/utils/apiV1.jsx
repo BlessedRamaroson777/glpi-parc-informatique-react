@@ -42,12 +42,17 @@ function normalizeRange(range) {
     }
     return null
 }
-
 async function request(method, endpoint, body, params, extra = {}) {
     const base = config.baseUrl
         ? config.baseUrl.replace(/\/$/, '')
-        : window.location.origin  // ← fallback proxy
-    const url = new URL(`${base}/${endpoint}`)
+        : window.location.origin
+
+    // si base est un chemin relatif (ex: "/apirest.php"), construire avec origin
+    const fullBase = base.startsWith('http')
+        ? base
+        : `${window.location.origin}${base}`
+
+    const url = new URL(`${fullBase}/${endpoint}`)
 
     if (params && typeof params === 'object') {
         Object.entries(params).forEach(([key, value]) => {
