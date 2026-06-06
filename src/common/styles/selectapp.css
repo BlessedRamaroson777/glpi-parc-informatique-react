@@ -1,0 +1,92 @@
+.select-app-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: #f8fafc;
+}
+
+.select-app-content {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+}
+
+.select-app-content h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.5rem;
+}
+
+.select-app-content > p {
+    font-size: 1rem;
+    color: #64748b;
+    margin-bottom: 3rem;
+}
+
+.app-selector {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.app-card {
+    width: 280px;
+    padding: 2rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.app-card:focus,
+.app-card:active {
+    outline: none;
+    border-color: #e5e7eb;
+}
+
+.app-card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.app-card p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.admin-card,
+.customer-card {
+    background: #ffffff;
+}
+
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+    .app-selector {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .app-card {
+        width: 100%;
+        max-width: 320px;
+    }
+}

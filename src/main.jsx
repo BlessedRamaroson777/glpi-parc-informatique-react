@@ -1,11 +1,6 @@
 import { createRoot } from "react-dom/client";
-import BackofficeApp from "./backoffice/App.jsx";
-import "./backoffice/styles/base.css";
-import "./backoffice/styles/layout.css";
+import App from "./App.jsx";
 
-const rootElement = document.getElementById("root");
-
-if (rootElement) {
-  const root = createRoot(rootElement);
-  root.render(<BackofficeApp />);
-}
+createRoot(document.getElementById("root")).render(
+    <App />
+);
