@@ -11,6 +11,9 @@ export default function Menu() {
         </h1>
         <Link to="/customer/assets">Assets</Link>
       </div>
+      <div>
+        <Link to="create-ticket">Créer un Ticket</Link>
+      </div>
 
       {/* <div className="menu-actions">
         <RefreshTokenButton />
