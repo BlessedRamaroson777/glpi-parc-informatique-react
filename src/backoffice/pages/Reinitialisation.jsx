@@ -1,363 +1,135 @@
-import { useMemo, useState } from "react";
-import { apiRequest } from "../../common/services/authService.jsx";
-import { RESET_CONFIG, PROTECTED_IDS } from "../constants/resetEntities.jsx";
-import "../styles/reinitialisation.css";
+import { useState } from "react"
+import { apiRequest } from "../../common/services/authService.jsx"
+import { RESET_CONFIG, PROTECTED_IDS } from "../constants/resetEntities.jsx"
 
-// ─── Constantes ──────────────────────────────────────────────────────────────
+const DRY_RUN = true
 
-const DRY_RUN = true;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Normalise la réponse GLPI (array direct, ou { data: [] }, ou { items: [] }).
- */
 function normalizeItems(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (payload?.data && Array.isArray(payload.data)) return payload.data;
-  if (payload?.items && Array.isArray(payload.items)) return payload.items;
-  return [];
+    if (Array.isArray(payload)) return payload
+    if (payload?.data && Array.isArray(payload.data)) return payload.data
+    return []
 }
 
-/**
- * Construit la liste des entités à afficher, triées par `order` croissant.
- * Distingue les entités "simples" (endpoint sans {id}) des "sous-ressources" (endpoint avec {id}).
- */
-function buildSortedEntities() {
-  return Object.entries(RESET_CONFIG)
+const ENTITIES = Object.entries(RESET_CONFIG)
     .map(([key, cfg]) => ({ key, ...cfg }))
-    .sort((a, b) => a.order - b.order);
-}
-
-/**
- * Regroupe les entités par groupe pour l'affichage UI.
- */
-function buildGroups(sorted) {
-  const map = new Map();
-  for (const entity of sorted) {
-    if (!map.has(entity.group)) map.set(entity.group, []);
-    map.get(entity.group).push(entity);
-  }
-  return [...map.entries()].map(([name, items]) => ({ name, items }));
-}
-
-// Couleur badge par groupe
-const GROUP_COLORS = {
-  Assistance:     { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
-  Assets:         { bg: '#cfe2ff', border: '#0d6efd', text: '#084298' },
-  Administration: { bg: '#d1e7dd', border: '#198754', text: '#0a3622' },
-  Référentiels:   { bg: '#f8d7da', border: '#dc3545', text: '#842029' },
-};
-
-const SORTED_ENTITIES = buildSortedEntities();
-const ENTITY_GROUPS   = buildGroups(SORTED_ENTITIES);
-
-// ─── Composant principal ──────────────────────────────────────────────────────
+    .sort((a, b) => a.order - b.order)
 
 export default function Reinitialisation() {
-  const [selected, setSelected]   = useState({});
-  const [logs, setLogs]           = useState([]);
-  const [busy, setBusy]           = useState(false);
-  const [logType, setLogType]     = useState({}); // key → 'info'|'success'|'error'|'warn'
+    const [selected, setSelected] = useState({})
+    const [logs, setLogs]         = useState([])
+    const [busy, setBusy]         = useState(false)
 
-  const allKeys = useMemo(
-    () => SORTED_ENTITIES.map((e) => e.key),
-    []
-  );
+    const selectedCount = ENTITIES.filter(e => selected[e.key]).length
 
-  const allSelected = allKeys.length > 0 && allKeys.every((k) => selected[k]);
-
-  // ── Sélection ─────────────────────────────────────────────────────────────
-
-  function toggleAll() {
-    const value = !allSelected;
-    const next  = {};
-    allKeys.forEach((k) => { next[k] = value; });
-    setSelected(next);
-  }
-
-  function toggleGroup(group) {
-    const allChecked = group.items.every((item) => selected[item.key]);
-    setSelected((prev) => {
-      const next = { ...prev };
-      group.items.forEach((item) => { next[item.key] = !allChecked; });
-      return next;
-    });
-  }
-
-  function toggleOne(key) {
-    setSelected((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
-
-  // ── Logs ───────────────────────────────────────────────────────────────────
-
-  function pushLog(message, type = 'info') {
-    setLogs((prev) => [...prev, { message, type }]);
-  }
-
-  // ── Suppression d'une sous-ressource (endpoint contenant {id}) ────────────
-  // ex: Assistance/Ticket/{id}/Cost  → on liste les tickets, puis pour chaque
-  // ticket on récupère ses coûts et on les supprime.
-
-  async function deleteSubResource(entity) {
-    const { key, endpoint } = entity;
-    // Trouve l'entité parente (celle dont dépend cette sous-ressource)
-    const parentKey = entity.dependencies[0]; // ex: 'tickets'
-    if (!parentKey) {
-      pushLog(`⚠️  [${key}] Pas de parent défini — ignoré`, 'warn');
-      return;
+    function toggle(key) {
+        setSelected(prev => ({ ...prev, [key]: !prev[key] }))
     }
 
-    const parentCfg = RESET_CONFIG[parentKey];
-    if (!parentCfg) {
-      pushLog(`⚠️  [${key}] Parent "${parentKey}" introuvable dans RESET_CONFIG — ignoré`, 'warn');
-      return;
+    function toggleAll() {
+        const allOn = ENTITIES.every(e => selected[e.key])
+        const next  = {}
+        ENTITIES.forEach(e => { next[e.key] = !allOn })
+        setSelected(next)
     }
 
-    // 1. Récupère la liste des parents
-    const parentUrl = `/api.php/v2/${parentCfg.endpoint}`;
-    pushLog(`  GET ${parentUrl}  (parents pour ${key})`);
-    const parentResp  = await apiRequest(parentUrl, { method: 'GET' });
-    const parentItems = normalizeItems(parentResp);
-
-    if (parentItems.length === 0) {
-      pushLog(`  ℹ️  Aucun parent "${parentKey}" trouvé → rien à faire pour "${key}"`, 'info');
-      return;
+    function pushLog(msg, type = "info") {
+        setLogs(prev => [...prev, { msg, type }])
     }
 
-    // 2. Pour chaque parent, récupère et supprime les sous-ressources
-    for (const parent of parentItems) {
-      const parentId = parent.id ?? parent.ID;
-      if (!parentId) continue;
-
-      const subListUrl = `/api.php/v2/${endpoint.replace('{id}', parentId)}`;
-      pushLog(`  GET ${subListUrl}`);
-      const subResp  = await apiRequest(subListUrl, { method: 'GET' });
-      const subItems = normalizeItems(subResp);
-
-      for (const sub of subItems) {
-        const subId = sub.id ?? sub.ID;
-        if (!subId) continue;
-
-        const deleteUrl = `${subListUrl}/${subId}?force=true`;
-        pushLog(`  DELETE ${deleteUrl}`, 'warn');
-        if (!DRY_RUN) {
-          await apiRequest(deleteUrl, { method: 'DELETE' });
-        }
-      }
-    }
-  }
-
-  // ── Suppression d'une entité simple ──────────────────────────────────────
-
-  async function deleteSimpleEntity(entity) {
-    const { key, endpoint } = entity;
-    const listUrl = `/api.php/v2/${endpoint}`;
-    pushLog(`GET ${listUrl}`);
-    const response = await apiRequest(listUrl, { method: 'GET' });
-    const rows     = normalizeItems(response);
-
-    const protected_ids = PROTECTED_IDS[key] ?? [];
-
-    for (const row of rows) {
-      const id = row.id ?? row.ID;
-      if (!id) continue;
-
-      if (protected_ids.includes(id)) {
-        pushLog(`  ⛔ SKIP ${key} id=${id} (ID protégé)`, 'warn');
-        continue;
-      }
-
-      const deleteUrl = `/api.php/v2/${endpoint}/${id}?force=true`;
-      pushLog(`  DELETE ${deleteUrl}`, 'warn');
-      if (!DRY_RUN) {
-        await apiRequest(deleteUrl, { method: 'DELETE' });
-      }
-    }
-  }
-
-  // ── Handler principal ─────────────────────────────────────────────────────
-
-  async function handleReset() {
-    const activeEntities = SORTED_ENTITIES.filter((e) => selected[e.key]);
-    if (activeEntities.length === 0) {
-      pushLog('⚠️  Aucune entité sélectionnée.', 'warn');
-      return;
-    }
-
-    setBusy(true);
-    setLogs([]);
-    setLogType({});
-
-    if (DRY_RUN) {
-      pushLog('🔍  MODE DRY-RUN — aucune suppression réelle ne sera effectuée.', 'info');
-    }
-
-    try {
-      for (const entity of activeEntities) {
-        const isSubResource = entity.endpoint.includes('{id}');
-
-        pushLog(`\n▶ [${entity.group}] ${entity.label} (order: ${entity.order})`, 'info');
+    async function deleteEntity(entity) {
+        const { key, endpoint } = entity
+        const isSubResource     = endpoint.includes("{id}")
 
         if (isSubResource) {
-          await deleteSubResource(entity);
+            const parentKey = entity.dependencies?.[0]
+            const parentCfg = RESET_CONFIG[parentKey]
+            if (!parentCfg) return
+
+            const parents = normalizeItems(await apiRequest(`/api.php/v2/${parentCfg.endpoint}`, { method: "GET" }))
+            for (const parent of parents) {
+                const url   = `/api.php/v2/${endpoint.replace("{id}", parent.id)}`
+                const items = normalizeItems(await apiRequest(url, { method: "GET" }))
+                for (const item of items) {
+                    pushLog(`DELETE ${url}/${item.id}`, "warn")
+                    if (!DRY_RUN) await apiRequest(`${url}/${item.id}?force=true`, { method: "DELETE" })
+                }
+            }
         } else {
-          await deleteSimpleEntity(entity);
+            const url   = `/api.php/v2/${endpoint}`
+            const items = normalizeItems(await apiRequest(url, { method: "GET" }))
+            const skip  = PROTECTED_IDS[key] ?? []
+            for (const item of items) {
+                if (skip.includes(item.id)) { pushLog(`SKIP ${key} #${item.id}`, "warn"); continue }
+                pushLog(`DELETE ${url}/${item.id}`, "warn")
+                if (!DRY_RUN) await apiRequest(`${url}/${item.id}?force=true`, { method: "DELETE" })
+            }
         }
-
-        pushLog(`  ✅ ${entity.label} traité`, 'success');
-      }
-
-      if (DRY_RUN) {
-        pushLog('\n✅  DRY_RUN terminé — passe DRY_RUN à false pour les vraies suppressions.', 'success');
-      } else {
-        pushLog('\n✅  Réinitialisation terminée.', 'success');
-      }
-    } catch (error) {
-      pushLog(`\n❌  Erreur: ${error.message}`, 'error');
-    } finally {
-      setBusy(false);
     }
-  }
 
-  // ── Rendu ─────────────────────────────────────────────────────────────────
+    async function handleReset() {
+        const active = ENTITIES.filter(e => selected[e.key])
+        if (!active.length) return
 
-  const selectedCount = allKeys.filter((k) => selected[k]).length;
+        setBusy(true)
+        setLogs([])
+        if (DRY_RUN) pushLog("Mode DRY-RUN — aucune suppression réelle", "info")
 
-  return (
-    <section id="reinitialisation" className="reinit-page">
-      <div className="reinit-header">
-        <h1>Réinitialisation GLPI</h1>
-        <p className="reinit-subtitle">
-          Supprime les données importées via les 3 fichiers CSV dans le bon ordre
-          pour respecter les contraintes de clés étrangères de GLPI.
-        </p>
-        {DRY_RUN && (
-          <div className="reinit-dryrun-badge">
-            🔍 Mode DRY-RUN actif — aucune suppression réelle
-          </div>
-        )}
-      </div>
+        try {
+            for (const entity of active) {
+                pushLog(`▶ ${entity.label}`, "info")
+                await deleteEntity(entity)
+                pushLog(`✓ ${entity.label}`, "success")
+            }
+            pushLog(DRY_RUN ? "DRY-RUN terminé" : "Réinitialisation terminée", "success")
+        } catch (e) {
+            pushLog(`Erreur : ${e.message}`, "error")
+        } finally {
+            setBusy(false)
+        }
+    }
 
-      {/* Ordre de suppression */}
-      <div className="reinit-order-info">
-        <strong>Ordre de suppression (clés étrangères GLPI) :</strong>
-        <ol>
-          <li>Sous-ressources tickets <em>(coûts, suivis, documents, membres)</em></li>
-          <li>Tickets</li>
-          <li>Infocoms des assets <em>(computer &amp; monitor)</em></li>
-          <li>Assets <em>(ordinateurs, moniteurs)</em></li>
-          <li>Utilisateurs</li>
-          <li>Référentiels <em>(modèles, fabricants, localisations, états)</em></li>
-        </ol>
-      </div>
+    return (
+        <section className="reinit-page">
+            <h1>Réinitialisation</h1>
+            {DRY_RUN && <p className="reinit-dryrun">Mode DRY-RUN actif — aucune suppression réelle</p>}
 
-      {/* Sélection globale */}
-      <div className="reinit-select-all">
-        <label className="reinit-checkbox-label">
-          <input
-            type="checkbox"
-            id="select-all"
-            checked={allSelected}
-            onChange={toggleAll}
-          />
-          <span>Tout sélectionner</span>
-          <span className="reinit-count-badge">{selectedCount} / {allKeys.length}</span>
-        </label>
-      </div>
+            <label className="reinit-label" style={{ marginBottom: 12 }}>
+                <input type="checkbox" onChange={toggleAll} checked={ENTITIES.every(e => selected[e.key])} />
+                Tout sélectionner
+            </label>
 
-      {/* Groupes */}
-      <div className="form-grid">
-        {ENTITY_GROUPS.map((group) => {
-          const colors      = GROUP_COLORS[group.name] ?? GROUP_COLORS['Référentiels'];
-          const groupChecked = group.items.every((item) => selected[item.key]);
-          const groupPartial = !groupChecked && group.items.some((item) => selected[item.key]);
-
-          return (
-            <div key={group.name} className="reinit-group-card" style={{ '--group-border': colors.border, '--group-bg': colors.bg }}>
-              <div className="reinit-group-header">
-                <label className="reinit-checkbox-label">
-                  <input
-                    type="checkbox"
-                    id={`group-${group.name}`}
-                    checked={groupChecked}
-                    ref={(el) => { if (el) el.indeterminate = groupPartial; }}
-                    onChange={() => toggleGroup(group)}
-                  />
-                  <span
-                    className="reinit-group-badge"
-                    style={{ background: colors.bg, border: `1px solid ${colors.border}`, color: colors.text }}
-                  >
-                    {group.name}
-                  </span>
-                </label>
-                <span className="reinit-group-count" style={{ color: colors.text }}>
-                  {group.items.filter((i) => selected[i.key]).length}/{group.items.length}
-                </span>
-              </div>
-
-              <div className="reinit-group-items">
-                {group.items.map((item) => {
-                  const isSubResource = item.endpoint.includes('{id}');
-                  return (
-                    <label key={item.key} className="reinit-item-label">
-                      <input
-                        type="checkbox"
-                        id={`entity-${item.key}`}
-                        checked={Boolean(selected[item.key])}
-                        onChange={() => toggleOne(item.key)}
-                      />
-                      <div className="reinit-item-info">
-                        <span className="reinit-item-name">
-                          {isSubResource && <span className="reinit-sub-badge">↳ sous-res.</span>}
-                          {item.label}
-                        </span>
-                        <span className="reinit-item-desc">{item.description}</span>
-                        <code className="reinit-item-endpoint">{item.endpoint}</code>
-                      </div>
-                      <span className="reinit-order-tag">#{item.order}</span>
+            <div className="form-grid">
+                {ENTITIES.map(entity => (
+                    <label key={entity.key} className="reinit-label">
+                        <input
+                            type="checkbox"
+                            checked={Boolean(selected[entity.key])}
+                            onChange={() => toggle(entity.key)}
+                        />
+                        <div>
+                            <span>{entity.label}</span>
+                            <code className="reinit-endpoint">{entity.endpoint}</code>
+                        </div>
                     </label>
-                  );
-                })}
-              </div>
+                ))}
             </div>
-          );
-        })}
-      </div>
 
-      {/* Boutons */}
-      <div className="button-row">
-        <button
-          type="button"
-          id="btn-reset"
-          className="reinit-btn reinit-btn-danger"
-          onClick={handleReset}
-          disabled={busy || selectedCount === 0}
-        >
-          {busy ? '⏳ En cours…' : `🗑️ Réinitialiser (${selectedCount} entité${selectedCount > 1 ? 's' : ''})`}
-        </button>
-        <button
-          type="button"
-          id="btn-clear-logs"
-          className="reinit-btn reinit-btn-secondary"
-          onClick={() => setLogs([])}
-          disabled={busy}
-        >
-          Effacer les logs
-        </button>
-      </div>
-
-      {/* Journal */}
-      {logs.length > 0 && (
-        <div className="reinit-log-panel">
-          <div className="reinit-log-title">Journal d'exécution</div>
-          {logs.map((entry, index) => (
-            <div key={index} className={`reinit-log-line reinit-log-${entry.type}`}>
-              {entry.message}
+            <div className="button-row">
+                <button onClick={handleReset} disabled={busy || selectedCount === 0}>
+                    {busy ? "En cours…" : `Réinitialiser (${selectedCount})`}
+                </button>
+                <button onClick={() => setLogs([])} disabled={busy} style={{ background: "none", color: "var(--text)", borderColor: "var(--border)" }}>
+                    Effacer les logs
+                </button>
             </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
+
+            {logs.length > 0 && (
+                <div className="status">
+                    {logs.map((entry, i) => (
+                        <div key={i} className={`reinit-log-${entry.type}`}>{entry.msg}</div>
+                    ))}
+                </div>
+            )}
+        </section>
+    )
 }
