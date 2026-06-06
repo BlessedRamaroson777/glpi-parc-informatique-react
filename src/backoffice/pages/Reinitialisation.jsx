@@ -1,337 +1,360 @@
 import { useMemo, useState } from "react";
 import { apiRequest } from "../../common/services/authService.jsx";
+import { RESET_CONFIG, PROTECTED_IDS } from "../constants/resetEntities.jsx";
 import "../styles/reinitialisation.css";
 
-const ENTITY_GROUPS = [
-  {
-    name: "Groupe 1 - Dependances",
-    items: [
-      {
-        key: "tickets",
-        label: "Tickets",
-        listPath: "/api.php/v2/Assistance/Ticket",
-        deletePath: "/api.php/v2/Assistance/Ticket",
-      },
-      {
-        key: "changes",
-        label: "Changements",
-        listPath: "/api.php/v2/Assistance/Change",
-        deletePath: "/api.php/v2/Assistance/Change",
-      },
-      {
-        key: "problems",
-        label: "Problemes",
-        listPath: "/api.php/v2/Assistance/Problem",
-        deletePath: "/api.php/v2/Assistance/Problem",
-      },
-      {
-        key: "contracts",
-        label: "Contrats",
-        listPath: "/api.php/v2/Management/Contract",
-        deletePath: "/api.php/v2/Management/Contract",
-      },
-      {
-        key: "documents",
-        label: "Documents",
-        listPath: "/api.php/v2/Management/Document",
-        deletePath: "/api.php/v2/Management/Document",
-      },
-    ],
-  },
-  {
-    name: "Groupe 2 - Parc",
-    items: [
-      {
-        key: "computers",
-        label: "Ordinateurs",
-        listPath: "/api.php/v2/Assets/Computer",
-        deletePath: "/api.php/v2/Assets/Computer",
-      },
-      {
-        key: "monitors",
-        label: "Moniteurs",
-        listPath: "/api.php/v2/Assets/Monitor",
-        deletePath: "/api.php/v2/Assets/Monitor",
-      },
-      {
-        key: "printers",
-        label: "Imprimantes",
-        listPath: "/api.php/v2/Assets/Printer",
-        deletePath: "/api.php/v2/Assets/Printer",
-      },
-      {
-        key: "network",
-        label: "Equipements reseau",
-        listPath: "/api.php/v2/Assets/NetworkEquipment",
-        deletePath: "/api.php/v2/Assets/NetworkEquipment",
-      },
-      {
-        key: "phones",
-        label: "Telephones",
-        listPath: "/api.php/v2/Assets/Phone",
-        deletePath: "/api.php/v2/Assets/Phone",
-      },
-      {
-        key: "peripherals",
-        label: "Peripheriques",
-        listPath: "/api.php/v2/Assets/Peripheral",
-        deletePath: "/api.php/v2/Assets/Peripheral",
-      },
-      {
-        key: "software",
-        label: "Logiciels",
-        listPath: "/api.php/v2/Assets/Software",
-        deletePath: "/api.php/v2/Assets/Software",
-      },
-      {
-        key: "passive-dc",
-        label: "Equipements passifs DC",
-        listPath: "/api.php/v2/Assets/PassiveDCEquipment",
-        deletePath: "/api.php/v2/Assets/PassiveDCEquipment",
-      },
-      {
-        key: "pdu",
-        label: "PDU",
-        listPath: "/api.php/v2/Assets/PDU",
-        deletePath: "/api.php/v2/Assets/PDU",
-      },
-      {
-        key: "enclosures",
-        label: "Baies",
-        listPath: "/api.php/v2/Assets/Enclosure",
-        deletePath: "/api.php/v2/Assets/Enclosure",
-      },
-      {
-        key: "racks",
-        label: "Racks",
-        listPath: "/api.php/v2/Assets/Rack",
-        deletePath: "/api.php/v2/Assets/Rack",
-      },
-    ],
-  },
-  {
-    name: "Groupe 3 - Gestion",
-    items: [
-      {
-        key: "suppliers",
-        label: "Fournisseurs",
-        listPath: "/api.php/v2/Management/Supplier",
-        deletePath: "/api.php/v2/Management/Supplier",
-      },
-      {
-        key: "contacts",
-        label: "Contacts",
-        listPath: "/api.php/v2/Management/Contact",
-        deletePath: "/api.php/v2/Management/Contact",
-      },
-      {
-        key: "budgets",
-        label: "Budgets",
-        listPath: "/api.php/v2/Management/Budget",
-        deletePath: "/api.php/v2/Management/Budget",
-      },
-      {
-        key: "projects",
-        label: "Projets",
-        listPath: "/api.php/v2/Project",
-        deletePath: "/api.php/v2/Project",
-      },
-    ],
-  },
-  {
-    name: "Groupe 4 - Administration",
-    items: [
-      {
-        key: "users",
-        label: "Utilisateurs",
-        listPath: "/api.php/v2/Administration/User",
-        deletePath: "/api.php/v2/Administration/User",
-      },
-      {
-        key: "groups",
-        label: "Groupes",
-        listPath: "/api.php/v2/Administration/Group",
-        deletePath: "/api.php/v2/Administration/Group",
-      },
-      {
-        key: "entities",
-        label: "Entites",
-        listPath: "/api.php/v2/Administration/Entity",
-        deletePath: "/api.php/v2/Administration/Entity",
-      },
-    ],
-  },
-];
+// ─── Constantes ──────────────────────────────────────────────────────────────
 
 const DRY_RUN = true;
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Normalise la réponse GLPI (array direct, ou { data: [] }, ou { items: [] }).
+ */
 function normalizeItems(payload) {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  if (payload?.data && Array.isArray(payload.data)) {
-    return payload.data;
-  }
-
-  if (payload?.items && Array.isArray(payload.items)) {
-    return payload.items;
-  }
-
+  if (Array.isArray(payload)) return payload;
+  if (payload?.data && Array.isArray(payload.data)) return payload.data;
+  if (payload?.items && Array.isArray(payload.items)) return payload.items;
   return [];
 }
 
+/**
+ * Construit la liste des entités à afficher, triées par `order` croissant.
+ * Distingue les entités "simples" (endpoint sans {id}) des "sous-ressources" (endpoint avec {id}).
+ */
+function buildSortedEntities() {
+  return Object.entries(RESET_CONFIG)
+    .map(([key, cfg]) => ({ key, ...cfg }))
+    .sort((a, b) => a.order - b.order);
+}
+
+/**
+ * Regroupe les entités par groupe pour l'affichage UI.
+ */
+function buildGroups(sorted) {
+  const map = new Map();
+  for (const entity of sorted) {
+    if (!map.has(entity.group)) map.set(entity.group, []);
+    map.get(entity.group).push(entity);
+  }
+  return [...map.entries()].map(([name, items]) => ({ name, items }));
+}
+
+// Couleur badge par groupe
+const GROUP_COLORS = {
+  Assistance:     { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
+  Assets:         { bg: '#cfe2ff', border: '#0d6efd', text: '#084298' },
+  Administration: { bg: '#d1e7dd', border: '#198754', text: '#0a3622' },
+  Référentiels:   { bg: '#f8d7da', border: '#dc3545', text: '#842029' },
+};
+
+const SORTED_ENTITIES = buildSortedEntities();
+const ENTITY_GROUPS   = buildGroups(SORTED_ENTITIES);
+
+// ─── Composant principal ──────────────────────────────────────────────────────
+
 export default function Reinitialisation() {
-  const [selected, setSelected] = useState({});
-  const [logs, setLogs] = useState([]);
-  const [busy, setBusy] = useState(false);
+  const [selected, setSelected]   = useState({});
+  const [logs, setLogs]           = useState([]);
+  const [busy, setBusy]           = useState(false);
+  const [logType, setLogType]     = useState({}); // key → 'info'|'success'|'error'|'warn'
 
   const allKeys = useMemo(
-    () => ENTITY_GROUPS.flatMap((group) => group.items.map((item) => item.key)),
+    () => SORTED_ENTITIES.map((e) => e.key),
     []
   );
 
-  const allSelected = allKeys.length > 0 && allKeys.every((key) => selected[key]);
+  const allSelected = allKeys.length > 0 && allKeys.every((k) => selected[k]);
+
+  // ── Sélection ─────────────────────────────────────────────────────────────
 
   function toggleAll() {
-    const next = {};
     const value = !allSelected;
-    allKeys.forEach((key) => {
-      next[key] = value;
-    });
+    const next  = {};
+    allKeys.forEach((k) => { next[k] = value; });
     setSelected(next);
   }
 
   function toggleGroup(group) {
-    const allChecked = group.items.every(
-        (item) => selected[item.key]
-    );
-
+    const allChecked = group.items.every((item) => selected[item.key]);
     setSelected((prev) => {
-        const next = { ...prev };
-
-        group.items.forEach((item) => {
-        next[item.key] = !allChecked;
-        });
-
-        return next;
+      const next = { ...prev };
+      group.items.forEach((item) => { next[item.key] = !allChecked; });
+      return next;
     });
-    }
+  }
 
   function toggleOne(key) {
-    setSelected((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    setSelected((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function pushLog(message) {
-    setLogs((prev) => [...prev, message]);
+  // ── Logs ───────────────────────────────────────────────────────────────────
+
+  function pushLog(message, type = 'info') {
+    setLogs((prev) => [...prev, { message, type }]);
   }
+
+  // ── Suppression d'une sous-ressource (endpoint contenant {id}) ────────────
+  // ex: Assistance/Ticket/{id}/Cost  → on liste les tickets, puis pour chaque
+  // ticket on récupère ses coûts et on les supprime.
+
+  async function deleteSubResource(entity) {
+    const { key, endpoint } = entity;
+    // Trouve l'entité parente (celle dont dépend cette sous-ressource)
+    const parentKey = entity.dependencies[0]; // ex: 'tickets'
+    if (!parentKey) {
+      pushLog(`⚠️  [${key}] Pas de parent défini — ignoré`, 'warn');
+      return;
+    }
+
+    const parentCfg = RESET_CONFIG[parentKey];
+    if (!parentCfg) {
+      pushLog(`⚠️  [${key}] Parent "${parentKey}" introuvable dans RESET_CONFIG — ignoré`, 'warn');
+      return;
+    }
+
+    // 1. Récupère la liste des parents
+    const parentUrl = `/api.php/v2/${parentCfg.endpoint}`;
+    pushLog(`  GET ${parentUrl}  (parents pour ${key})`);
+    const parentResp  = await apiRequest(parentUrl, { method: 'GET' });
+    const parentItems = normalizeItems(parentResp);
+
+    if (parentItems.length === 0) {
+      pushLog(`  ℹ️  Aucun parent "${parentKey}" trouvé → rien à faire pour "${key}"`, 'info');
+      return;
+    }
+
+    // 2. Pour chaque parent, récupère et supprime les sous-ressources
+    for (const parent of parentItems) {
+      const parentId = parent.id ?? parent.ID;
+      if (!parentId) continue;
+
+      const subListUrl = `/api.php/v2/${endpoint.replace('{id}', parentId)}`;
+      pushLog(`  GET ${subListUrl}`);
+      const subResp  = await apiRequest(subListUrl, { method: 'GET' });
+      const subItems = normalizeItems(subResp);
+
+      for (const sub of subItems) {
+        const subId = sub.id ?? sub.ID;
+        if (!subId) continue;
+
+        const deleteUrl = `${subListUrl}/${subId}?force=true`;
+        pushLog(`  DELETE ${deleteUrl}`, 'warn');
+        if (!DRY_RUN) {
+          await apiRequest(deleteUrl, { method: 'DELETE' });
+        }
+      }
+    }
+  }
+
+  // ── Suppression d'une entité simple ──────────────────────────────────────
+
+  async function deleteSimpleEntity(entity) {
+    const { key, endpoint } = entity;
+    const listUrl = `/api.php/v2/${endpoint}`;
+    pushLog(`GET ${listUrl}`);
+    const response = await apiRequest(listUrl, { method: 'GET' });
+    const rows     = normalizeItems(response);
+
+    const protected_ids = PROTECTED_IDS[key] ?? [];
+
+    for (const row of rows) {
+      const id = row.id ?? row.ID;
+      if (!id) continue;
+
+      if (protected_ids.includes(id)) {
+        pushLog(`  ⛔ SKIP ${key} id=${id} (ID protégé)`, 'warn');
+        continue;
+      }
+
+      const deleteUrl = `/api.php/v2/${endpoint}/${id}?force=true`;
+      pushLog(`  DELETE ${deleteUrl}`, 'warn');
+      if (!DRY_RUN) {
+        await apiRequest(deleteUrl, { method: 'DELETE' });
+      }
+    }
+  }
+
+  // ── Handler principal ─────────────────────────────────────────────────────
 
   async function handleReset() {
+    const activeEntities = SORTED_ENTITIES.filter((e) => selected[e.key]);
+    if (activeEntities.length === 0) {
+      pushLog('⚠️  Aucune entité sélectionnée.', 'warn');
+      return;
+    }
+
     setBusy(true);
     setLogs([]);
+    setLogType({});
+
+    if (DRY_RUN) {
+      pushLog('🔍  MODE DRY-RUN — aucune suppression réelle ne sera effectuée.', 'info');
+    }
 
     try {
-      for (const group of ENTITY_GROUPS) {
-        const activeItems = group.items.filter((item) => selected[item.key]);
-        if (activeItems.length === 0) {
-          continue;
+      for (const entity of activeEntities) {
+        const isSubResource = entity.endpoint.includes('{id}');
+
+        pushLog(`\n▶ [${entity.group}] ${entity.label} (order: ${entity.order})`, 'info');
+
+        if (isSubResource) {
+          await deleteSubResource(entity);
+        } else {
+          await deleteSimpleEntity(entity);
         }
 
-        pushLog(`--- ${group.name} ---`);
-
-        for (const item of activeItems) {
-          pushLog(`GET ${item.listPath}`);
-          const response = await apiRequest(item.listPath, { method: "GET" });
-          const rows = normalizeItems(response);
-
-          for (const row of rows) {
-            const id = row.id ?? row.ID;
-            if (!id) {
-              continue;
-            }
-
-            const deleteUrl = `${item.deletePath}/${id}?force=true`;
-            pushLog(`DELETE ${deleteUrl}`);
-
-            if (!DRY_RUN) {
-              await apiRequest(deleteUrl, { method: "DELETE" });
-            }
-          }
-        }
+        pushLog(`  ✅ ${entity.label} traité`, 'success');
       }
 
       if (DRY_RUN) {
-        pushLog("DRY_RUN actif: aucune suppression effectuee.");
+        pushLog('\n✅  DRY_RUN terminé — passe DRY_RUN à false pour les vraies suppressions.', 'success');
+      } else {
+        pushLog('\n✅  Réinitialisation terminée.', 'success');
       }
     } catch (error) {
-      pushLog(`Erreur: ${error.message}`);
+      pushLog(`\n❌  Erreur: ${error.message}`, 'error');
     } finally {
       setBusy(false);
     }
   }
 
+  // ── Rendu ─────────────────────────────────────────────────────────────────
+
+  const selectedCount = allKeys.filter((k) => selected[k]).length;
+
   return (
     <section id="reinitialisation" className="reinit-page">
-      <h1>Reinitialisation</h1>
-      <p>Selectionne les entites a purger, puis lance la reinitialisation.</p>
+      <div className="reinit-header">
+        <h1>Réinitialisation GLPI</h1>
+        <p className="reinit-subtitle">
+          Supprime les données importées via les 3 fichiers CSV dans le bon ordre
+          pour respecter les contraintes de clés étrangères de GLPI.
+        </p>
+        {DRY_RUN && (
+          <div className="reinit-dryrun-badge">
+            🔍 Mode DRY-RUN actif — aucune suppression réelle
+          </div>
+        )}
+      </div>
 
-      <div className="form-grid">
-        <label>
+      {/* Ordre de suppression */}
+      <div className="reinit-order-info">
+        <strong>Ordre de suppression (clés étrangères GLPI) :</strong>
+        <ol>
+          <li>Sous-ressources tickets <em>(coûts, suivis, documents, membres)</em></li>
+          <li>Tickets</li>
+          <li>Infocoms des assets <em>(computer &amp; monitor)</em></li>
+          <li>Assets <em>(ordinateurs, moniteurs)</em></li>
+          <li>Utilisateurs</li>
+          <li>Référentiels <em>(modèles, fabricants, localisations, états)</em></li>
+        </ol>
+      </div>
+
+      {/* Sélection globale */}
+      <div className="reinit-select-all">
+        <label className="reinit-checkbox-label">
           <input
             type="checkbox"
+            id="select-all"
             checked={allSelected}
             onChange={toggleAll}
           />
-          Tout selectionner
+          <span>Tout sélectionner</span>
+          <span className="reinit-count-badge">{selectedCount} / {allKeys.length}</span>
         </label>
+      </div>
 
+      {/* Groupes */}
+      <div className="form-grid">
         {ENTITY_GROUPS.map((group) => {
-            const groupSelected = group.items.every(
-                (item) => selected[item.key]
-            );
+          const colors      = GROUP_COLORS[group.name] ?? GROUP_COLORS['Référentiels'];
+          const groupChecked = group.items.every((item) => selected[item.key]);
+          const groupPartial = !groupChecked && group.items.some((item) => selected[item.key]);
 
-            return (
-                <div key={group.name}>
-                <strong>
+          return (
+            <div key={group.name} className="reinit-group-card" style={{ '--group-border': colors.border, '--group-bg': colors.bg }}>
+              <div className="reinit-group-header">
+                <label className="reinit-checkbox-label">
+                  <input
+                    type="checkbox"
+                    id={`group-${group.name}`}
+                    checked={groupChecked}
+                    ref={(el) => { if (el) el.indeterminate = groupPartial; }}
+                    onChange={() => toggleGroup(group)}
+                  />
+                  <span
+                    className="reinit-group-badge"
+                    style={{ background: colors.bg, border: `1px solid ${colors.border}`, color: colors.text }}
+                  >
                     {group.name}
-                    <label>
-                    <input
-                        type="checkbox"
-                        checked={groupSelected}
-                        onChange={() => toggleGroup(group)}
-                    />
-                    Tout selectionner
-                    </label>
-                </strong>
+                  </span>
+                </label>
+                <span className="reinit-group-count" style={{ color: colors.text }}>
+                  {group.items.filter((i) => selected[i.key]).length}/{group.items.length}
+                </span>
+              </div>
 
-                {group.items.map((item) => (
-                    <label key={item.key}>
-                    <input
+              <div className="reinit-group-items">
+                {group.items.map((item) => {
+                  const isSubResource = item.endpoint.includes('{id}');
+                  return (
+                    <label key={item.key} className="reinit-item-label">
+                      <input
                         type="checkbox"
+                        id={`entity-${item.key}`}
                         checked={Boolean(selected[item.key])}
                         onChange={() => toggleOne(item.key)}
-                    />
-                    {item.label}
+                      />
+                      <div className="reinit-item-info">
+                        <span className="reinit-item-name">
+                          {isSubResource && <span className="reinit-sub-badge">↳ sous-res.</span>}
+                          {item.label}
+                        </span>
+                        <span className="reinit-item-desc">{item.description}</span>
+                        <code className="reinit-item-endpoint">{item.endpoint}</code>
+                      </div>
+                      <span className="reinit-order-tag">#{item.order}</span>
                     </label>
-                ))}
-                </div>
-            );
+                  );
+                })}
+              </div>
+            </div>
+          );
         })}
       </div>
 
+      {/* Boutons */}
       <div className="button-row">
-        <button type="button" onClick={handleReset} disabled={busy}>
-          Reinitialiser
+        <button
+          type="button"
+          id="btn-reset"
+          className="reinit-btn reinit-btn-danger"
+          onClick={handleReset}
+          disabled={busy || selectedCount === 0}
+        >
+          {busy ? '⏳ En cours…' : `🗑️ Réinitialiser (${selectedCount} entité${selectedCount > 1 ? 's' : ''})`}
+        </button>
+        <button
+          type="button"
+          id="btn-clear-logs"
+          className="reinit-btn reinit-btn-secondary"
+          onClick={() => setLogs([])}
+          disabled={busy}
+        >
+          Effacer les logs
         </button>
       </div>
 
+      {/* Journal */}
       {logs.length > 0 && (
-        <div className="status">
-          {logs.map((line, index) => (
-            <div key={`${line}-${index}`}>{line}</div>
+        <div className="reinit-log-panel">
+          <div className="reinit-log-title">Journal d'exécution</div>
+          {logs.map((entry, index) => (
+            <div key={index} className={`reinit-log-line reinit-log-${entry.type}`}>
+              {entry.message}
+            </div>
           ))}
         </div>
       )}

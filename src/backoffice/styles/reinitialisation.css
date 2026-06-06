@@ -1,55 +1,327 @@
-.reinit-page .form-grid {
-  display: grid;
-  gap: 12px;
-  margin-top: 16px;
+/* ─── Page Réinitialisation ──────────────────────────────────────────────── */
+
+.reinit-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
 }
 
-.reinit-page label {
-  font-weight: 600;
+/* ─── En-tête ──────────────────────────────────────────────────────────────── */
+
+.reinit-header {
+  margin-bottom: 20px;
+}
+
+.reinit-header h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
   color: var(--text);
+  margin: 0 0 6px;
+}
+
+.reinit-subtitle {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.93rem;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.reinit-dryrun-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ─── Bloc info ordre ──────────────────────────────────────────────────────── */
+
+.reinit-order-info {
+  background: var(--bg-card, #f8f9fb);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+}
+
+.reinit-order-info strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.reinit-order-info ol {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.8;
+}
+
+.reinit-order-info em {
+  color: var(--text-muted, #9ca3af);
+  font-style: normal;
+  font-size: 0.82rem;
+}
+
+/* ─── Sélection globale ────────────────────────────────────────────────────── */
+
+.reinit-select-all {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--bg-card, #f1f5f9);
+  border: 1px solid var(--border, #e2e8f0);
+  margin-bottom: 16px;
+}
+
+.reinit-count-badge {
+  margin-left: 8px;
+  padding: 2px 10px;
+  background: var(--primary, #4f6ef7);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ─── Grille de groupes ────────────────────────────────────────────────────── */
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+/* ─── Carte de groupe ──────────────────────────────────────────────────────── */
+
+.reinit-group-card {
+  border-radius: 10px;
+  border: 1.5px solid var(--group-border, #e2e8f0);
+  background: var(--bg-card, #fff);
+  overflow: hidden;
+}
+
+.reinit-group-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--group-bg, #f8f9fb);
+  border-bottom: 1px solid var(--group-border, #e2e8f0);
 }
 
-.reinit-page strong {
-  display: block;
-  margin: 16px 0 8px;
+.reinit-group-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
-.reinit-page input[type="checkbox"] {
+.reinit-group-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* ─── Items ────────────────────────────────────────────────────────────────── */
+
+.reinit-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.reinit-item-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border, #f1f5f9);
+  transition: background 0.15s;
+}
+
+.reinit-item-label:last-child {
+  border-bottom: none;
+}
+
+.reinit-item-label:hover {
+  background: var(--bg-hover, #f8f9fb);
+}
+
+.reinit-item-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
-}
-
-.reinit-page .button-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
-
-.reinit-page button {
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--primary-dark);
-  background: var(--primary);
-  color: #ffffff;
-  font-weight: 600;
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--primary, #4f6ef7);
   cursor: pointer;
 }
 
-.reinit-page button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.reinit-item-info {
+  flex: 1;
+  min-width: 0;
 }
 
-.reinit-page .status {
-  margin-top: 16px;
-  padding: 12px;
-  border-radius: 6px;
-  background: #eef2fb;
-  border: 1px solid var(--border);
+.reinit-item-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
   color: var(--text);
-  font-size: 14px;
 }
+
+.reinit-sub-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.reinit-item-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7280);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reinit-item-endpoint {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted, #9ca3af);
+  font-family: monospace;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reinit-order-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted, #9ca3af);
+  font-weight: 600;
+  white-space: nowrap;
+  margin-top: 3px;
+}
+
+/* ─── Labels checkbox commun ───────────────────────────────────────────────── */
+
+.reinit-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.reinit-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary, #4f6ef7);
+  cursor: pointer;
+}
+
+/* ─── Boutons ──────────────────────────────────────────────────────────────── */
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.reinit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.reinit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.reinit-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.reinit-btn-danger {
+  background: #dc3545;
+  color: #fff;
+}
+
+.reinit-btn-danger:not(:disabled):hover {
+  background: #b02a37;
+}
+
+.reinit-btn-secondary {
+  background: var(--bg-card, #f1f5f9);
+  color: var(--text);
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.reinit-btn-secondary:not(:disabled):hover {
+  background: #e2e8f0;
+}
+
+/* ─── Journal ──────────────────────────────────────────────────────────────── */
+
+.reinit-log-panel {
+  border-radius: 10px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: #0f1117;
+  overflow: hidden;
+}
+
+.reinit-log-title {
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  background: #1a1d27;
+  border-bottom: 1px solid #2d3147;
+}
+
+.reinit-log-line {
+  padding: 3px 14px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.reinit-log-info    { color: #d1d5db; }
+.reinit-log-success { color: #4ade80; }
+.reinit-log-warn    { color: #facc15; }
+.reinit-log-error   { color: #f87171; }
