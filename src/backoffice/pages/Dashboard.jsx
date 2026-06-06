@@ -1,7 +1,7 @@
 import React from "react"
 import { getDashboardData } from "../services/dashboardService.jsx"
 import "../styles/dashboard.css"
-import { TICKET_STATUS, TICKET_TYPES } from "../../common/constants/Assets.jsx"
+import { TICKET_TYPES } from "../../common/constants/Assets.jsx"
 
 
 function SectionTitle({ children }) {
