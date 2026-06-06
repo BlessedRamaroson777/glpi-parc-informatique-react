@@ -1,20 +1,8 @@
 import React from "react"
 import { getDashboardData } from "../services/dashboardService.jsx"
 import "../styles/dashboard.css"
+import { TICKET_STATUS, TICKET_TYPES } from "../../common/constants/Assets.jsx"
 
-const TICKET_STATUS = [
-    { key: "new", label: "Nouveau" },
-    { key: "assigned", label: "Attribué" },
-    { key: "planned", label: "Planifié" },
-    { key: "waiting", label: "En attente" },
-    { key: "solved", label: "Résolu" },
-    { key: "closed", label: "Clos" },
-]
-
-const TICKET_TYPES = [
-    { key: "incident", label: "Incidents" },
-    { key: "request", label: "Demandes" },
-]
 
 function SectionTitle({ children }) {
     return <p className="section-title">{children}</p>

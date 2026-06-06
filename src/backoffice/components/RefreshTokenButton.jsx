@@ -18,7 +18,7 @@ export default function RefreshTokenButton() {
         expiresInSeconds: data.expires_in || data.expiresIn || 3600,
       });
       setStatus("OK");
-      navigate("/admin/login", { replace: true });
+      navigate("/admin", { replace: true });
     } catch (error) {
       setStatus(`Erreur: ${error.message}`);
     }
