@@ -15,7 +15,7 @@
 import { runFile1Import } from "./importFile1Service.jsx"
 import { runFile2Import } from "./importFile2Service.jsx"
 import { runFile3Import } from "./importFile3Service.jsx"
-import { parseCsv }       from "./importFile1Service.jsx"
+import { parseCsv }       from "../utils/importUtils.jsx"
 
 // ── Étapes exposées pour le stepper UI ─────────────────────────────────────
 
