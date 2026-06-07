@@ -2,7 +2,6 @@ import { useReset, RESET_ENTITIES } from "../hooks/useReset.jsx"
 import EntityChecklist              from "../components/EntityChecklist.jsx"
 import LogPanel                     from "../components/LogPanel.jsx"
 import "../styles/reinitialisation.css"
-import "../styles/import.css"
 
 export default function Reinitialisation() {
     const {
