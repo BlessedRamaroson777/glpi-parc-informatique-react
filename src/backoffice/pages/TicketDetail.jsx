@@ -7,6 +7,7 @@ import { TICKET_STATUS, TICKET_PRIORITIES, TICKET_TYPES } from "../../common/con
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx";
 import apiV1 from "../../common/utils/apiV1.jsx";
 import "../styles/tickets.css"; // Importation du fichier CSS
+import apiV2 from "../../common/utils/apiV2.jsx";
 
 const STATUS_LABELS   = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
 const PRIORITY_LABELS = Object.fromEntries(TICKET_PRIORITIES.map(s => [s.value, s.label]));
@@ -56,37 +57,34 @@ export default function TicketDetail() {
   const [costsLoading, setCostsLoading] = React.useState(false);
 
   React.useEffect(() => {
-      if (ticket?.id) {
-        getTicketItems(ticket.id).then(async (data) => {
-          console.log("Items liés :", data)
-          
-          // Fetch additional details for each linked item (name, serial)
-          const resolvedItems = await Promise.all(data.map(async (item) => {
-              try {
-                  const details = await apiV1.getItem(item.itemtype, item.items_id);
-                  return { ...item, name: details?.name || "Inconnu", serial: details?.serial };
-              } catch (e) {
-                  return { ...item, name: "Inconnu" };
-              }
-          }));
-          
-          setItems(resolvedItems)
-      }).catch(() => setItems([]))
+    if (!ticket?.id) return
 
-        // Fetch costs (from File 3 import)
-        setCostsLoading(true);
-        const costEntity = new TicketCost();
-        costEntity.getByTicket(ticket.id)
-          .then(data => {
-            console.log("Coûts liés :", data);
-            setCosts(data);
-          })
-          .catch((err) => {
-            console.warn("Erreur récupération coûts :", err);
-            setCosts([]);
-          })
-          .finally(() => setCostsLoading(false));
-      }
+    // Items liés
+    getTicketItems(ticket.id).then(async (data) => {
+        const resolvedItems = await Promise.all(data.map(async (item) => {
+            try {
+                const details = await apiV1.getItem(item.itemtype, item.items_id)
+                return { ...item, name: details?.name || "Inconnu", serial: details?.serial }
+            } catch {
+                return { ...item, name: "Inconnu" }
+            }
+        }))
+        setItems(resolvedItems)
+    }).catch(() => setItems([]))
+
+    // Coûts
+    setCostsLoading(true)
+    apiV2.get(`/api.php/v2.3/Assistance/Ticket/${ticket.id}/Cost`)
+        .then(data => {
+            const list = Array.isArray(data) ? data : (data?.data ?? [])
+            setCosts(list)
+        })
+        .catch(err => {
+            console.warn("Erreur coûts :", err)
+            setCosts([])
+        })
+        .finally(() => setCostsLoading(false))
+
   }, [ticket?.id])
 
   React.useEffect(() => {
