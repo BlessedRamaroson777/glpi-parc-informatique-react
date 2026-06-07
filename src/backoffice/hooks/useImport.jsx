@@ -21,8 +21,8 @@ const DRY_RUN = false   // false = vrais POST ; true = DRY-RUN simulation
  *   steps         — IMPORT_STEPS (pour le stepper)
  */
 export function useImport() {
-    const [files,       setFiles]       = useState({ file1: null, file2: null, file3: null })
-    const [fileNames,   setFileNames]   = useState({ file1: "",   file2: "",   file3: "" })
+    const [files,       setFiles]       = useState({ file1: null, file2: null, file3: null, file4: null })
+    const [fileNames,   setFileNames]   = useState({ file1: "",   file2: "",   file3: "",   file4: "" })
     const [logs,        setLogs]        = useState([])
     const [busy,        setBusy]        = useState(false)
     const [currentStep, setCurrentStep] = useState(null)
@@ -37,6 +37,14 @@ export function useImport() {
             setFileNames(prev => ({ ...prev, [slot]: "" }))
             return
         }
+
+        // file4 (ZIP) → garder le File binaire, pas le lire comme texte
+        if (slot === "file4") {
+            setFiles(prev     => ({ ...prev, [slot]: file }))
+            setFileNames(prev => ({ ...prev, [slot]: file.name }))
+            return
+        }
+
         const reader = new FileReader()
         reader.onload = e => {
             setFiles(prev     => ({ ...prev, [slot]: e.target.result }))
@@ -77,7 +85,7 @@ export function useImport() {
 
         try {
             await runFullImport(
-                { file1: files.file1, file2: files.file2, file3: files.file3 },
+                { file1: files.file1, file2: files.file2, file3: files.file3, file4: files.file4 },
                 pushLog,
                 advanceStep,
                 DRY_RUN
@@ -97,7 +105,7 @@ export function useImport() {
         }
     }
 
-    const canImport = Boolean(files.file1 || files.file2 || files.file3) && !busy
+    const canImport = Boolean(files.file1 || files.file2 || files.file3 || files.file4) && !busy
 
     return {
         // fichiers
