@@ -216,7 +216,7 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
             manufacturers_id: manufacturerIds.get(row.Manufacturer) ?? 0,
             states_id:        stateIds.get(row.Status)          ?? 0,
             users_id:         userIds.get(row.User)             ?? 0,
-            users_id_tech:    userIds.get(row.User)             ?? 0,  // même utilisateur = technicien
+            // users_id_tech:    userIds.get(row.User)             ?? 0,  // même utilisateur = technicien
             comment:          `Importé automatiquement le ${today}`,
             is_global:        0,
             date_mod:         `${today} 00:00:00`,
