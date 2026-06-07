@@ -4,16 +4,16 @@ import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 import "../styles/assets.css"
 
 const EMPTY_FILTERS = {
-    name: "",
     type: "all",
-    status: "",
+    name: "",
+    serial: "",
+    entity: "",
     location: "",
     user: "",
     user_tech: "",
     manufacturer: "",
     model: "",
-    serial: "",
-    entity: "",
+    status: "",
 }
 
 function Input({ label, value, onChange }) {
@@ -21,6 +21,20 @@ function Input({ label, value, onChange }) {
         <div className="filter-field">
             <label>{label}</label>
             <input type="text" value={value} onChange={onChange} />
+        </div>
+    )
+}
+
+function DropdownFilter({ label, value, onChange, options }) {
+    return (
+        <div className="filter-field">
+            <label>{label}</label>
+            <select value={value} onChange={onChange}>
+                <option value="">Tous</option>
+                {options.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                ))}
+            </select>
         </div>
     )
 }
@@ -33,19 +47,27 @@ function fmt(iso) {
 function matches(asset, filters) {
     const contains = (field, val) =>
         !val || (field ?? "").toLowerCase().includes(val.toLowerCase())
+        
+    const exactMatch = (field, val) =>
+        !val || (field ?? "") === val
 
     return (
         (filters.type === "all" || asset.type === filters.type) &&
         contains(asset.name, filters.name) &&
-        contains(asset.status, filters.status) &&
-        contains(asset.location, filters.location) &&
+        contains(asset.serial, filters.serial) &&
         contains(asset.user, filters.user) &&
         contains(asset.user_tech, filters.user_tech) &&
-        contains(asset.manufacturer, filters.manufacturer) &&
-        contains(asset.model, filters.model) &&
-        contains(asset.serial, filters.serial) &&
-        contains(asset.entity, filters.entity)
+        exactMatch(asset.status, filters.status) &&
+        exactMatch(asset.location, filters.location) &&
+        exactMatch(asset.manufacturer, filters.manufacturer) &&
+        exactMatch(asset.model, filters.model) &&
+        exactMatch(asset.entity, filters.entity)
     )
+}
+
+function getUniqueValues(assets, key) {
+    const values = assets.map(a => a[key]).filter(Boolean)
+    return [...new Set(values)].sort()
 }
 
 export default function Assets() {
@@ -71,6 +93,12 @@ export default function Assets() {
     const hasFilters = Object.entries(filters).some(([k, v]) =>
         k === "type" ? v !== "all" : v !== ""
     )
+    
+    const locations = getUniqueValues(assets, "location")
+    const entities = getUniqueValues(assets, "entity")
+    const manufacturers = getUniqueValues(assets, "manufacturer")
+    const models = getUniqueValues(assets, "model")
+    const statuses = getUniqueValues(assets, "status")
 
     return (
         <section className="assets-page">
@@ -100,14 +128,14 @@ export default function Assets() {
                 </div>
 
                 <Input label="Nom" value={filters.name} onChange={set("name")} />
-                <Input label="Statut" value={filters.status} onChange={set("status")} />
-                <Input label="Localisation" value={filters.location} onChange={set("location")} />
+                <Input label="Série" value={filters.serial} onChange={set("serial")} />
+                <DropdownFilter label="Entité" value={filters.entity} onChange={set("entity")} options={entities} />
+                <DropdownFilter label="Localisation" value={filters.location} onChange={set("location")} options={locations} />
                 <Input label="Utilisateur" value={filters.user} onChange={set("user")} />
                 <Input label="Technicien" value={filters.user_tech} onChange={set("user_tech")} />
-                <Input label="Fabricant" value={filters.manufacturer} onChange={set("manufacturer")} />
-                <Input label="Modèle" value={filters.model} onChange={set("model")} />
-                <Input label="Série" value={filters.serial} onChange={set("serial")} />
-                <Input label="Entité" value={filters.entity} onChange={set("entity")} />
+                <DropdownFilter label="Fabricant" value={filters.manufacturer} onChange={set("manufacturer")} options={manufacturers} />
+                <DropdownFilter label="Modèle" value={filters.model} onChange={set("model")} options={models} />
+                <DropdownFilter label="Statut" value={filters.status} onChange={set("status")} options={statuses} />
             </div>
 
             {/* LISTE */}
@@ -116,34 +144,45 @@ export default function Assets() {
             ) : filtered.length === 0 ? (
                 <p className="empty">Aucun élément trouvé</p>
             ) : (
-                <ul className="assets-list">
-                    {filtered.map(asset => (
-                        <li key={`${asset.type}-${asset.id}`} className="asset-item">
-
-                            <div className="asset-left">
-                                <span className="asset-id">#{asset.id}</span>
-
-                                <div>
-                                    <div className="asset-name">{asset.name}</div>
-                                    <div className="asset-meta">
-                                        {[asset.location, asset.user, asset.serial]
-                                            .filter(Boolean)
-                                            .join(" · ") || "—"}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="asset-right">
-                                <span className="badge">{asset.typeLabel}</span>
-                                {asset.status && <span className="status">{asset.status}</span>}
-                                <span className="date">{fmt(asset.date_creation)}</span>
-                            </div>
-
-                        </li>
-                    ))}
-                </ul>
+                <div className="table-responsive" style={{ overflowX: "auto", marginTop: "2rem" }}>
+                    <table className="assets-table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", background: "white", borderRadius: "8px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+                        <thead style={{ background: "var(--bg-light)", borderBottom: "2px solid var(--border)" }}>
+                            <tr>
+                                <th style={{ padding: "1rem" }}>ID</th>
+                                <th style={{ padding: "1rem" }}>Type</th>
+                                <th style={{ padding: "1rem" }}>Nom</th>
+                                <th style={{ padding: "1rem" }}>Série</th>
+                                <th style={{ padding: "1rem" }}>Entité</th>
+                                <th style={{ padding: "1rem" }}>Localisation</th>
+                                <th style={{ padding: "1rem" }}>Utilisateur</th>
+                                <th style={{ padding: "1rem" }}>Fabricant</th>
+                                <th style={{ padding: "1rem" }}>Modèle</th>
+                                <th style={{ padding: "1rem" }}>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.map(asset => (
+                                <tr key={`${asset.type}-${asset.id}`} style={{ borderBottom: "1px solid var(--border)", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "var(--bg-light)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                    <td style={{ padding: "1rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>#{asset.id}</td>
+                                    <td style={{ padding: "1rem" }}>
+                                        <span style={{ background: "var(--primary-light)", color: "var(--primary)", padding: "2px 8px", borderRadius: "12px", fontSize: "0.85rem" }}>
+                                            {asset.typeLabel}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: "1rem", fontWeight: "600" }}>{asset.name}</td>
+                                    <td style={{ padding: "1rem" }}>{asset.serial || "—"}</td>
+                                    <td style={{ padding: "1rem" }}>{asset.entity || "—"}</td>
+                                    <td style={{ padding: "1rem" }}>{asset.location || "—"}</td>
+                                    <td style={{ padding: "1rem" }}>{asset.user || "—"}</td>
+                                    <td style={{ padding: "1rem" }}>{asset.manufacturer || "—"}</td>
+                                    <td style={{ padding: "1rem" }}>{asset.model || "—"}</td>
+                                    <td style={{ padding: "1rem" }}>{asset.status || "—"}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
-
         </section>
     )
 }

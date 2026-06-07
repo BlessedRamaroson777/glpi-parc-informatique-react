@@ -27,7 +27,7 @@ function normalize(item, type) {
 
 // GET tous les assets d'un type
 export async function getAssets(type) {
-    const data = await apiV2.get(`${BASE_V2}/${type}`)
+    const data = await apiV2.get(`${BASE_V2}/${type}`, { expand_dropdowns: "true" })
     return Array.isArray(data) ? data.map(item => normalize(item, type)) : []
 }
 
