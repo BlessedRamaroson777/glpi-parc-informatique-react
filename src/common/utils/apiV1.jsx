@@ -42,6 +42,8 @@ function normalizeRange(range) {
     }
     return null
 }
+import { API_BASE_URL } from "../constants/apiConfig.jsx";
+
 async function request(method, endpoint, body, params, extra = {}) {
     const base = config.baseUrl
         ? config.baseUrl.replace(/\/$/, '')

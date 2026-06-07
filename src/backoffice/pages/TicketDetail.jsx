@@ -3,6 +3,8 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { getTicketById, getTicketItems } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
 import { TICKET_STATUS, TICKET_PRIORITIES, TICKET_TYPES } from "../../common/constants/TicketConstants.jsx";
+import { ASSET_TYPES } from "../../common/constants/Assets.jsx";
+import apiV1 from "../../common/utils/apiV1.jsx";
 import "../styles/tickets.css"; // Importation du fichier CSS
 
 const STATUS_LABELS   = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
@@ -37,9 +39,20 @@ export default function TicketDetail() {
 
   React.useEffect(() => {
       if (ticket?.id) {
-        getTicketItems(ticket.id).then(data => {
+        getTicketItems(ticket.id).then(async (data) => {
           console.log("Items liés :", data)
-          setItems(data)
+          
+          // Fetch additional details for each linked item (name, serial)
+          const resolvedItems = await Promise.all(data.map(async (item) => {
+              try {
+                  const details = await apiV1.getItem(item.itemtype, item.items_id);
+                  return { ...item, name: details?.name || "Inconnu", serial: details?.serial };
+              } catch (e) {
+                  return { ...item, name: "Inconnu" };
+              }
+          }));
+          
+          setItems(resolvedItems)
       }).catch(() => setItems([]))
       }
   }, [ticket?.id])
@@ -54,7 +67,7 @@ export default function TicketDetail() {
 
   return (
     <section className="ticket-detail-container">
-      <a onClick={() => navigate(-1)} className="btn-back">
+      <a onClick={() => navigate(-1)} className="btn-back" style={{ cursor: "pointer" }}>
         ← Retour
       </a>
 
@@ -104,15 +117,23 @@ export default function TicketDetail() {
       )}
 
       {items.length > 0 && (
-      <div className="linked-items-section">
-          <p className="section-title">Éléments liés</p>
+      <div className="linked-items-section" style={{ marginTop: "2rem", padding: "1.5rem", background: "var(--bg-light)", borderRadius: "8px" }}>
+          <p className="section-title" style={{ marginBottom: "1rem" }}>Éléments liés ({items.length})</p>
 
-          <ul className="linked-items-list">
-              {items.map((item, i) => (
-                  <li key={i} className="linked-item">
-                      {item.itemtype} #{item.items_id}
-                  </li>
-              ))}
+          <ul className="linked-items-list" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {items.map((item, i) => {
+                  const typeLabel = ASSET_TYPES.find(a => a.key === item.itemtype)?.label || item.itemtype;
+                  return (
+                      <li key={i} className="linked-item" style={{ padding: "0.8rem", borderBottom: "1px solid var(--border)", display: "flex", gap: "10px", alignItems: "center" }}>
+                          <span style={{ background: "var(--primary-light)", color: "var(--primary)", padding: "2px 8px", borderRadius: "12px", fontSize: "0.85rem" }}>
+                              {typeLabel}
+                          </span>
+                          <strong>{item.name}</strong> 
+                          {item.serial && <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>(S/N: {item.serial})</span>} 
+                          <span style={{ marginLeft: "auto", color: "var(--text-muted)", fontSize: "0.8rem" }}>#{item.items_id}</span>
+                      </li>
+                  );
+              })}
           </ul>
       </div>
     )}
