@@ -15,7 +15,9 @@
 
 import { apiRequest } from "../../common/services/authService.jsx"
 import apiV1 from "../../common/utils/apiV1.jsx"
-import { parseCsv } from "./importFile1Service.jsx"
+import { parseCsv } from "../utils/importUtils.jsx"
+import { F2 } from "../constants/importConstants.jsx"
+
 
 // ── Mappings ────────────────────────────────────────────────────────────────
 
@@ -102,8 +104,9 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
         const priority  = PRIORITY_MAP[prioKey] ?? 3
 
         const payload = {
-            name:                row.Titre,
-            content:             row.Description || `${row.Titre} — importé automatiquement`,
+            name:    row[F2.TITRE],
+            content: row[F2.DESCRIPTION] || `${row[F2.TITRE]} — importé automatiquement`,
+            external_id: row[F2.REF],    
             type:                TYPE_MAP[typeKey]   ?? 1,
             status:              STATUS_MAP[statusKey] ?? 1,
             priority,
@@ -115,25 +118,31 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
             date_creation:       datetime,
         }
 
-        pushLog(`  CREATE Ticket « ${row.Titre} » (${datetime})`, "warn")
+        pushLog(`  CREATE Ticket « ${row[F2.TITRE]} » (${datetime})`, "warn")
 
         let glpiId = `DRY-TICKET-${ref}`
 
         if (!dryRun) {
-            const res = await apiRequest("/api.php/v2/Assistance/Ticket", {
-                method:  "POST",
-                headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ input: payload }),
-            })
-            const record = Array.isArray(res) ? res[0] : res
-            glpiId = record?.id ?? record?.data?.id ?? null
-            pushLog(`  ↳ Ticket créé id=${glpiId}`, "success")
+            console.log("Payload ticket:", JSON.stringify({ input: payload }))
+            console.log("F2.TITRE =", F2.TITRE, "| valeur =", row[F2.TITRE])
+            try {
+                const res = await apiV1.createItem("Ticket", { input: payload })
+                glpiId = res?.id ?? null
+                if (glpiId) {
+                    pushLog(`  ↳ Ticket créé id=${glpiId}`, "success")
+                } else {
+                    pushLog(`  ⚠ Erreur lors de la création du ticket (pas d'ID retourné)`, "error")
+                }
+            } catch (err) {
+                pushLog(`  ⚠ Erreur lors de la création du ticket: ${err.message}`, "error")
+                console.error("Erreur de création de ticket:", err)
+            }
         }
 
         ticketIds.set(ref, glpiId)
 
         // ── Lier les assets (Items) ──────────────────────────────────────
-        const itemNames = parseItems(row.Items)
+        const itemNames = parseItems(row[F2.ITEMS])
 
         for (const assetName of itemNames) {
             const resolved = resolveItemType(assetName, computers, monitors)
