@@ -48,24 +48,23 @@ export const RESET_CONFIG = {
 
   // ── 3. Sous-ressources assets ─────────────────────────────────────────────
   
-  // ── 3. Sous-ressources assets ─────────────────────────────────────────────
 
-  // computer_infocom: {
-  //   group: 'Assets',
-  //   label: 'Infocoms des ordinateurs',
-  //   endpoint: 'Assets/Computer/{id}/Infocom',
-  //   order: 3,
-  //   dependencies: ['computers'],
-  //   description: 'Fiches financières auto-créées sur les 9 PC',
-  // },
-  // monitor_infocom: {
-  //   group: 'Assets',
-  //   label: 'Infocom du moniteur',
-  //   endpoint: 'Assets/Monitor/{id}/Infocom',
-  //   order: 3.1,
-  //   dependencies: ['monitors'],
-  //   description: 'Fiche financière auto-créée sur MN-FORM-002',
-  // },
+  computer_infocom: {
+    group: 'Assets',
+    label: 'Infocoms des ordinateurs',
+    endpoint: 'Assets/Computer/{id}/Infocom',
+    order: 3,
+    dependencies: ['computers'],
+    description: 'Fiches financières auto-créées sur les 9 PC',
+  },
+  monitor_infocom: {
+    group: 'Assets',
+    label: 'Infocom du moniteur',
+    endpoint: 'Assets/Monitor/{id}/Infocom',
+    order: 3.1,
+    dependencies: ['monitors'],
+    description: 'Fiche financière auto-créée sur MN-FORM-002',
+  },
 
 
   // ── 4. Assets ─────────────────────────────────────────────────────────────
