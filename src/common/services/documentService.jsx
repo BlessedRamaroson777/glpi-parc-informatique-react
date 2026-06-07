@@ -19,14 +19,11 @@ function detectType(bytes) {
 }
 
 // ─── Télécharge via l'API REST (Session-Token dans le header) ─────────────
-// GLPI v1 : GET /apirest.php/Document/:id?alt=media  retourne le binaire
 async function fetchDocumentBlobUrl(docId) {
     const baseUrl      = (localStorage.getItem("glpi_base_url") || "").replace(/\/$/, "")
     const sessionToken = localStorage.getItem("glpi_session_token") || ""
     const appToken     = localStorage.getItem("glpi_app_token")     || ""
 
-    // Essai 1 : endpoint REST avec alt=media (GLPI 10+)
-    // Essai 2 : endpoint REST sans paramètre (certaines versions)
     const attempts = [
         `${baseUrl}/Document/${docId}?alt=media`,
         `${baseUrl}/Document/${docId}&alt=media`,
@@ -43,7 +40,6 @@ async function fetchDocumentBlobUrl(docId) {
             if (!res.ok) continue
 
             const contentType = res.headers.get("content-type") || ""
-            // Si GLPI renvoie du JSON → ce n'est pas le binaire, on ignore
             if (contentType.includes("application/json")) continue
 
             const buf   = await res.arrayBuffer()
@@ -64,13 +60,38 @@ async function fetchDocumentBlobUrl(docId) {
 }
 
 // ─── API publique ──────────────────────────────────────────────────────────
-export async function getItemDocuments(itemtype, itemsId) {
+export async function getItemDocuments(itemtype, itemsId, assetName = "") {
     try {
+        // 1. Appel de base à l'API Document
         const docs = await apiV1.get("Document", { itemtype, items_id: itemsId })
+        
+        console.log("=== DEBUG DOCUMENT IMAGE ===")
+        console.log("Recherche pour :", { itemtype, itemsId, assetName })
+        console.log("Données brutes reçues de l'API Document :", docs)
+        
         if (!Array.isArray(docs) || docs.length === 0) return []
 
+        // 2. Filtrage intelligent côté client si l'API renvoie trop de choses ou ne filtre pas
+        const filteredDocs = docs.filter(doc => {
+            // Option A : Si GLPI expose directement itemtype et items_id au premier niveau
+            if (doc.itemtype && doc.items_id) {
+                return doc.itemtype === itemtype && String(doc.items_id) === String(itemsId)
+            }
+            
+            // Option B : Fallback si GLPI lie le document uniquement par le nom de l'Asset
+            if (assetName && doc.name) {
+                return doc.name.toLowerCase() === assetName.toLowerCase() && doc.filename
+            }
+
+            // Par défaut si l'API a bien fait le tri en amont grâce aux paramètres d'URL
+            return true
+        })
+
+        console.log("Documents retenus après filtrage local :", filteredDocs)
+
+        // 3. Traitement et téléchargement des binaires retenus
         const results = await Promise.all(
-            docs.map(async (doc) => {
+            filteredDocs.map(async (doc) => {
                 if (!doc.id) return null
                 try {
                     const blobUrl = await fetchDocumentBlobUrl(doc.id)
