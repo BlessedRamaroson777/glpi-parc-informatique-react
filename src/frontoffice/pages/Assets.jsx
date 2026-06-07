@@ -144,39 +144,45 @@ export default function Assets() {
             ) : filtered.length === 0 ? (
                 <p className="empty">Aucun élément trouvé</p>
             ) : (
-                <div className="table-responsive" style={{ overflowX: "auto", marginTop: "2rem" }}>
-                    <table className="assets-table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", background: "white", borderRadius: "8px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-                        <thead style={{ background: "var(--bg-light)", borderBottom: "2px solid var(--border)" }}>
+                <div className="table-responsive">
+                    <table className="assets-table">
+                        <thead>
                             <tr>
-                                <th style={{ padding: "1rem" }}>ID</th>
-                                <th style={{ padding: "1rem" }}>Type</th>
-                                <th style={{ padding: "1rem" }}>Nom</th>
-                                <th style={{ padding: "1rem" }}>Série</th>
-                                <th style={{ padding: "1rem" }}>Entité</th>
-                                <th style={{ padding: "1rem" }}>Localisation</th>
-                                <th style={{ padding: "1rem" }}>Utilisateur</th>
-                                <th style={{ padding: "1rem" }}>Fabricant</th>
-                                <th style={{ padding: "1rem" }}>Modèle</th>
-                                <th style={{ padding: "1rem" }}>Statut</th>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>Nom</th>
+                                <th>Série</th>
+                                <th>Entité</th>
+                                <th>Localisation</th>
+                                <th>Utilisateur</th>
+                                <th>Fabricant</th>
+                                <th>Modèle</th>
+                                <th>Statut</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             {filtered.map(asset => (
-                                <tr key={`${asset.type}-${asset.id}`} style={{ borderBottom: "1px solid var(--border)", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "var(--bg-light)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                                    <td style={{ padding: "1rem", color: "var(--text-muted)", fontSize: "0.9rem" }}>#{asset.id}</td>
-                                    <td style={{ padding: "1rem" }}>
-                                        <span style={{ background: "var(--primary-light)", color: "var(--primary)", padding: "2px 8px", borderRadius: "12px", fontSize: "0.85rem" }}>
+                                <tr key={`${asset.type}-${asset.id}`}>
+                                    <td className="asset-id">#{asset.id}</td>
+
+                                    <td>
+                                        <span className="asset-type">
                                             {asset.typeLabel}
                                         </span>
                                     </td>
-                                    <td style={{ padding: "1rem", fontWeight: "600" }}>{asset.name}</td>
-                                    <td style={{ padding: "1rem" }}>{asset.serial || "—"}</td>
-                                    <td style={{ padding: "1rem" }}>{asset.entity || "—"}</td>
-                                    <td style={{ padding: "1rem" }}>{asset.location || "—"}</td>
-                                    <td style={{ padding: "1rem" }}>{asset.user || "—"}</td>
-                                    <td style={{ padding: "1rem" }}>{asset.manufacturer || "—"}</td>
-                                    <td style={{ padding: "1rem" }}>{asset.model || "—"}</td>
-                                    <td style={{ padding: "1rem" }}>{asset.status || "—"}</td>
+
+                                    <td className="asset-name">
+                                        {asset.name}
+                                    </td>
+
+                                    <td>{asset.serial || "—"}</td>
+                                    <td>{asset.entity || "—"}</td>
+                                    <td>{asset.location || "—"}</td>
+                                    <td>{asset.user || "—"}</td>
+                                    <td>{asset.manufacturer || "—"}</td>
+                                    <td>{asset.model || "—"}</td>
+                                    <td>{asset.status || "—"}</td>
                                 </tr>
                             ))}
                         </tbody>
