@@ -67,7 +67,6 @@ function Thumb({ doc, size = 64 }) {
         onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 0 2px var(--primary)"}
         onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
       >
-        {/* L'URL est un blob URL vérifié — si ça ne s'affiche pas, c'est un bug navigateur */}
         <img
           src={doc.url}
           alt={doc.name}
@@ -97,54 +96,63 @@ function Skeleton({ size, count = 1 }) {
   )
 }
 
-// ─── Hook partagé ─────────────────────────────────────────────────────────
-function useItemDocs(cacheKey, fetcher) {
-  const cached              = imageCache.get(cacheKey) ?? null
-  const [docs, setDocs]     = React.useState(cached)
-  const [loading, setLoad]  = React.useState(cached === null)
+// ─── ItemImages — Usage dans TicketDetail (Miniatures 72×72) ──────────────
+export function ItemImages({ itemtype, itemsId, assetName, size = 72 }) {
+    const [images, setImages] = React.useState([])
+    const [loading, setLoading] = React.useState(true)
 
-  React.useEffect(() => {
-    if (cached !== null) return
-    fetcher()
-      .then(result => { imageCache.set(cacheKey, result); setDocs(result) })
-      .finally(() => setLoad(false))
-  }, [cacheKey])
+    React.useEffect(() => {
+        if (!itemtype || !itemsId) {
+            setLoading(false)
+            return
+        }
 
-  return { docs, loading }
+        setLoading(true)
+        getItemDocuments(itemtype, itemsId, assetName)
+            .then(setImages)
+            .catch(() => setImages([]))
+            .finally(() => setLoading(false))
+    }, [itemtype, itemsId, assetName])
+
+    if (loading) return <Skeleton size={size} />
+    if (!images || images.length === 0) return null
+
+    return (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+            {images.map(doc => (
+                <Thumb key={doc.id} doc={doc} size={size} />
+            ))}
+        </div>
+    )
 }
 
-// ─── ItemImages — usage dans TicketDetail (miniatures 72×72) ──────────────
-export function ItemImages({ itemtype, itemsId, size = 72 }) {
-  const cacheKey = `${itemtype}-${itemsId}`
-  const { docs, loading } = useItemDocs(
-    cacheKey,
-    () => getItemDocuments(itemtype, itemsId)
-  )
-
-  if (loading) return <Skeleton size={size} />
-  if (!docs || docs.length === 0) return null
-
-  return (
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-      {docs.map(doc => <Thumb key={doc.id} doc={doc} size={size} />)}
-    </div>
-  )
-}
-
-// ─── AssetImagesCell — usage dans le tableau Assets (miniatures 36×36) ────
+// ─── AssetImagesCell — Usage dans la liste générale des Assets ────────────
 export function AssetImagesCell({ asset }) {
-  const cacheKey = `${asset.type}-${asset.id}`
-  const { docs, loading } = useItemDocs(
-    cacheKey,
-    () => getItemDocuments(asset.type, asset.id)
-  )
+    const [images, setImages] = React.useState([])
+    const [loading, setLoading] = React.useState(true)
 
-  if (loading) return <Skeleton size={36} />
-  if (!docs || docs.length === 0) return <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>—</span>
+    React.useEffect(() => {
+        if (!asset?.id || !asset?.type) {
+            setLoading(false)
+            return
+        }
 
-  return (
-    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
-      {docs.map(doc => <Thumb key={doc.id} doc={doc} size={36} />)}
-    </div>
-  )
+        setLoading(true)
+        getItemDocuments(asset.type, asset.id, asset.name)
+            .then(setImages)
+            .catch(() => setImages([]))
+            .finally(() => setLoading(false))
+            
+    }, [asset?.id, asset?.type, asset?.name])
+
+    if (loading) return <Skeleton size={40} />
+    if (!images || images.length === 0) return <span style={{ color: "var(--text-muted)" }}>—</span>
+
+    return (
+        <div className="assets-cell-thumbs" style={{ display: "flex", gap: "4px" }}>
+            {images.map(doc => (
+                <Thumb key={doc.id} doc={doc} size={40} />
+            ))}
+        </div>
+    )
 }

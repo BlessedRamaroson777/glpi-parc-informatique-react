@@ -177,9 +177,10 @@ export default function TicketDetail() {
 
                                     {/* ── Images de l'asset ── */}
                                     <ItemImages
-                                        itemtype={item.itemtype}
-                                        itemsId={item.items_id}
-                                        size={72}
+                                      itemtype={item.itemtype}
+                                      itemsId={item.items_id}
+                                      assetName={item.name} // <--- On injecte le nom récupéré pour filtrer au niveau du service
+                                      size={72}
                                     />
                                 </li>
                             );
