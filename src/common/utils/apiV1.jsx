@@ -121,6 +121,7 @@ const apiV1 = {
         const headers = normalized ? { Range: `items=${normalized}` } : undefined
         return request('GET', itemtype, null, params, { headers })
     },
+    getConfig: () => ({ ...config }),  // ← ajouter
 }
 
 export default apiV1

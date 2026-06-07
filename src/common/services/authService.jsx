@@ -62,19 +62,42 @@ function buildUrl(path) {
 
 async function parseResponse(response) {
   const contentType = response.headers.get("content-type") || "";
+  // Lire le texte brut une seule fois
+  const text = await response.text();
+
+  // 206 Partial Content = liste GLPI paginée → traiter comme succès
+  // 404 sur un endpoint de liste vide → retourner tableau vide
+  if (response.status === 206) {
+    if (!text) return [];
+    try { return JSON.parse(text); } catch { return text; }
+  }
+
+  if (response.status === 404) {
+    // Peut être une liste vide ou une vraie 404
+    // Si le corps contient un tableau vide ou GLPI error, on retourne []
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.length === 0) return [];
+    } catch { /* pas du JSON, c'est une vraie 404 */ }
+  }
 
   if (!response.ok) {
-    const errorText = contentType.includes("application/json")
-      ? JSON.stringify(await response.json())
-      : await response.text();
-    throw new Error(errorText || `HTTP ${response.status}`);
+    // Construire un message d'erreur lisible
+    let errorMsg = text || `HTTP ${response.status}`;
+    if (contentType.includes("application/json") && text) {
+      try { errorMsg = JSON.stringify(JSON.parse(text)); } catch { /* garder texte brut */ }
+    }
+    throw new Error(errorMsg);
   }
+
+  // Corps vide (ex: 201 No Content) → retourner null sans planter
+  if (!text) return null;
 
   if (contentType.includes("application/json")) {
-    return response.json();
+    try { return JSON.parse(text); } catch { return text; }
   }
 
-  return response.text();
+  return text;
 }
 
 export async function login({ username, password }) {
@@ -92,17 +115,18 @@ export async function login({ username, password }) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  const result = parseResponse(response);
 
-  return parseResponse(response);
+  // après avoir récupéré le token V2, ajouter :
+  apiV1.setConfig({
+      baseUrl: "/apirest.php",
+      appToken: import.meta.env.VITE_GLPI_APP_TOKEN,
+  })
+
+  await apiV1.initSession(import.meta.env.VITE_GLPI_USER_TOKEN)
+
+  return result;
 }
-
-// après avoir récupéré le token V2, ajouter :
-apiV1.setConfig({
-    baseUrl: "/apirest.php",
-    appToken: import.meta.env.VITE_GLPI_APP_TOKEN,
-})
-
-await apiV1.initSession(import.meta.env.VITE_GLPI_USER_TOKEN)
 
 export async function refreshAccessToken() {
   const refreshToken = getRefreshToken();
@@ -167,4 +191,12 @@ export async function apiRequest(path, options = {}) {
   }
 
   return parseResponse(response);
+}
+
+export async function ensureV1Session() {
+    apiV1.setConfig({
+        baseUrl:  "/apirest.php",
+        appToken: import.meta.env.VITE_GLPI_APP_TOKEN,
+    })
+    await apiV1.initSession(import.meta.env.VITE_GLPI_USER_TOKEN)
 }
