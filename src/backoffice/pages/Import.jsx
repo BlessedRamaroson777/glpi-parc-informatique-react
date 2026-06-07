@@ -3,32 +3,6 @@ import LogPanel           from "../components/LogPanel.jsx"
 import ImportStepper      from "../components/ImportStepper.jsx"
 import "../styles/import.css"
 
-// ── Métadonnées des 3 fichiers pour l'UI ────────────────────────────────────
-
-const FILE_META = [
-    {
-        slot:    "file1",
-        label:   "Feuille 1 — Assets",
-        desc:    "Ordinateurs & moniteur (10 lignes) : Name, Status, Location, Manufacturer, Model…",
-        icon:    "🖥️",
-        accept:  ".csv",
-    },
-    {
-        slot:    "file2",
-        label:   "Feuille 2 — Tickets",
-        desc:    "Tickets d'incidents (2 lignes) : Ref, Date, Type, Titre, Description, Items liés…",
-        icon:    "🎫",
-        accept:  ".csv",
-    },
-    {
-        slot:    "file3",
-        label:   "Feuille 3 — Coûts",
-        desc:    "Coûts de tickets (2 lignes) : Num_Ticket, Duration_second, Time_Cost, Fixed_Cost",
-        icon:    "💰",
-        accept:  ".csv",
-    },
-]
-
 // ── Dropzone ─────────────────────────────────────────────────────────────────
 
 function Dropzone({ meta, fileName, onChange, disabled }) {
@@ -92,69 +66,48 @@ export default function Import() {
 
     return (
         <section className="import-page">
-            <header className="import-header">
-                <h1 className="import-header__title">Import de données GLPI</h1>
-                <p className="import-header__sub">
-                    Importer les 3 fichiers CSV dans l'ordre pour peupler GLPI avec les assets, tickets et coûts.
-                </p>
-                {dryRun && (
-                    <div className="import-dryrun-badge">
-                        🧪 Mode DRY-RUN actif — aucune donnée ne sera insérée en base
-                    </div>
-                )}
-            </header>
+            <h1>Import des données</h1>
 
-            {/* ── Dropzones ────────────────────────────────────────────── */}
-            <div className="import-dropzones">
-                {FILE_META.map(meta => (
-                    <Dropzone
-                        key={meta.slot}
-                        meta={meta}
-                        fileName={fileNames[meta.slot]}
-                        onChange={file => setFile(meta.slot, file)}
-                        disabled={busy}
+            <div className="import-form">
+                <label>
+                    Fichier des équipements
+                    <input
+                        type="file"
+                        accept=".csv"
+                        onChange={e => setFile("file1", e.target.files[0])}
                     />
-                ))}
-            </div>
+                </label>
 
-            {/* ── Stepper ──────────────────────────────────────────────── */}
-            {hasAnyStep && (
-                <div className="import-stepper-wrap">
-                    <ImportStepper
-                        steps={steps}
-                        current={currentStep}
-                        done={doneSteps}
-                        error={errorStep}
+                <label>
+                    Fichier des tickets
+                    <input
+                        type="file"
+                        accept=".csv"
+                        onChange={e => setFile("file2", e.target.files[0])}
                     />
-                </div>
-            )}
+                </label>
 
-            {/* ── Actions ──────────────────────────────────────────────── */}
-            <div className="import-actions">
-                <button
-                    className="import-btn import-btn--primary"
-                    onClick={handleImport}
-                    disabled={!canImport}
-                >
-                    {busy
-                        ? <><span className="import-spinner" /> Import en cours…</>
-                        : `Importer${dryRun ? " (DRY-RUN)" : ""}`
-                    }
+                <label>
+                    Fichier des coûts
+                    <input
+                        type="file"
+                        accept=".csv"
+                        onChange={e => setFile("file3", e.target.files[0])}
+                    />
+                </label>
+
+                <button onClick={handleImport}>
+                    Importer
                 </button>
-
-                {logs.length > 0 && (
-                    <button
-                        className="import-btn import-btn--ghost"
-                        onClick={clearLogs}
-                        disabled={busy}
-                    >
-                        🗑 Vider les logs
-                    </button>
-                )}
             </div>
 
-            {/* ── Logs ─────────────────────────────────────────────────── */}
-            <LogPanel logs={logs} onClear={clearLogs} maxHeight="400px" />
+            {busy && <p>Import en cours...</p>}
+
+            <LogPanel
+                logs={logs}
+                onClear={clearLogs}
+                maxHeight="300px"
+            />
         </section>
     )
 }
