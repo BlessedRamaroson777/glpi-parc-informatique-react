@@ -13,7 +13,8 @@
  */
 
 import { apiRequest } from "../../common/services/authService.jsx"
-import { parseCsv } from "./importFile1Service.jsx"
+import { parseCsv } from "../utils/importUtils.jsx"
+
 
 // ── Helper : virgule décimale → point ────────────────────────────────────────
 
@@ -47,23 +48,41 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
 
     const { ticketIds = new Map(), ticketDates = new Map() } = registry
     let count = 0
-
-    // Compteur par ticket pour nommer "Coût intervention #N"
     const costCounters = new Map()
 
     for (const row of rows) {
-        const ref     = row.Num_Ticket
-        const glpiId  = ticketIds.get(ref)
+        const ref = row.Num_Ticket
+
+        // Cherche d'abord dans la Map en mémoire (import complet)
+        // Sinon cherche dans GLPI via external_id (import F3 seul)
+        let glpiId = ticketIds.get(ref)
 
         if (!glpiId) {
-            pushLog(`  ⚠ Ticket ref=${ref} non trouvé dans le registre — ligne ignorée`, "warn")
+            const res = await apiRequest(
+                `/api.php/v2/Assistance/Ticket?filter=external_id=="${ref}"`,
+                { method: "GET" }
+            )
+            const tickets = Array.isArray(res) ? res : []
+            glpiId = tickets[0]?.id ?? null
+        }
+
+        if (!glpiId) {
+            pushLog(`  ⚠ Ticket ref=${ref} introuvable — ligne ignorée`, "warn")
             continue
         }
 
+        // Pour ticketDates aussi — fallback via l'API
+        let beginDate = ticketDates.get(ref)
+        if (!beginDate) {
+            const ticket = await apiRequest(
+                `/api.php/v2/Assistance/Ticket/${glpiId}`,
+                { method: "GET" }
+            )
+            beginDate = ticket?.date ?? new Date().toISOString().slice(0, 19).replace("T", " ")
+        }
         const n = (costCounters.get(ref) ?? 0) + 1
         costCounters.set(ref, n)
 
-        const beginDate = ticketDates.get(ref) ?? new Date().toISOString().slice(0, 19).replace("T", " ")
         const duration  = parseInt(row.Duration_second, 10) || 0
         const endDate   = duration > 0 ? addSeconds(beginDate, duration) : beginDate
 
