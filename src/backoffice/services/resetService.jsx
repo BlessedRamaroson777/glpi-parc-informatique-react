@@ -109,3 +109,9 @@ export async function runReset(entities, pushLog, dryRun = true) {
     pushLog(dryRun ? "DRY-RUN terminé" : "Réinitialisation terminée ✓", "success")
     alert(dryRun ? "DRY-RUN terminé — aucune suppression réelle" : "Réinitialisation terminée ✓")
 }
+
+export async function runResetForAll(pushLog, dryRun = true) {
+    const allEntities = Object.entries(RESET_CONFIG).map(([key, cfg]) => ({ key, ...cfg }))
+    const sortedEntities = allEntities.sort((a, b) => a.order - b.order)
+    await runReset(sortedEntities, pushLog, dryRun)
+}

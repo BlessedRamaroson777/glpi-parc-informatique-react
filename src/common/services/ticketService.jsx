@@ -48,7 +48,7 @@ export async function searchTickets(name) {
 }
 
 export function getTicketItems(ticketId) {
-    return apiV2.get("/apirest.php/Item_Ticket", {
+    return apiV1.get("Item_Ticket", {   // ← apiV1, pas apiV2
         "searchText[tickets_id]": ticketId,
     })
 }
