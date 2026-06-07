@@ -1,7 +1,7 @@
-import apiV2 from '../../backoffice/utils/apiV2.jsx'
+import apiV2 from '../utils/apiV2.jsx'
 
 class TicketCost {
-    endpoint = 'Assistance/TicketCost'
+    endpoint = '/apirest.php/TicketCost'
 
     constructor(data = {}) {
         this.id = data.id ?? null
@@ -19,17 +19,17 @@ class TicketCost {
         this.date_begin = data.date_begin ?? null
         this.date_end = data.date_end ?? null
 
-        // Numériques
-        this.duration = data.duration ?? 0
-        this.cost_time = data.cost_time ?? 0      // Coût horaire
-        this.cost_fixed = data.cost_fixed ?? 0    // Coût fixe
-        this.cost_material = data.cost_material ?? 0 // Coût matériel
+        // Valeurs numériques
+        this.actiontime = Number(data.actiontime ?? 0)
+        this.cost_time = Number(data.cost_time ?? 0)
+        this.cost_fixed = Number(data.cost_fixed ?? 0)
+        this.cost_material = Number(data.cost_material ?? 0)
     }
 
     static fromData(data) {
         const obj = Object.create(TicketCost.prototype)
         Object.assign(obj, data)
-        obj.endpoint = 'Assistance/TicketCost'
+        obj.endpoint = '/apirest.php/TicketCost'
         return obj
     }
 
@@ -58,7 +58,7 @@ class TicketCost {
     // --- CRUD ---------------------------------------------------------------
 
     async save() {
-        const created = await apiV2.post(this.endpoint, this._toCreatePayload())
+        const created = await apiV2.post(this.endpoint, { input: this._toCreatePayload() })
         return TicketCost.fromData(created)
     }
 
@@ -69,12 +69,13 @@ class TicketCost {
 
     async getAll(params = {}) {
         const data = await apiV2.get(this.endpoint, params)
-        return data.map(item => TicketCost.fromData(item))
+        const items = Array.isArray(data) ? data : (data?.data ?? [])
+        return items.map(item => TicketCost.fromData(item))
     }
 
     async update() {
         if (!this.id) throw new Error('Impossible de modifier sans ID')
-        const updated = await apiV2.patch(`${this.endpoint}/${this.id}`, this._toPayload())
+        const updated = await apiV2.put(`${this.endpoint}/${this.id}`, { input: this._toPayload() })
         return TicketCost.fromData(updated)
     }
 
@@ -83,11 +84,11 @@ class TicketCost {
         await apiV2.delete(`${this.endpoint}/${this.id}`)
     }
 
-    // 2. CORRECTION: Utilisation de tickets_id au lieu de ticket.id pour l'API GLPI
     async getByTicket(ticketId) {
         if (!ticketId) return []
-        const data = await apiV2.get(this.endpoint, { filter: `tickets_id==${ticketId}` })
-        return data.map(item => TicketCost.fromData(item))
+        const data = await apiV2.get(this.endpoint, { "searchText[tickets_id]": ticketId })
+        const items = Array.isArray(data) ? data : (data?.data ?? [])
+        return items.map(item => TicketCost.fromData(item))
     }
 
     // --- Validations et Utilitaires -----------------------------------------

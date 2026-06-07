@@ -48,7 +48,7 @@ export async function searchTickets(name) {
 }
 
 export function getTicketItems(ticketId) {
-    return apiV1.get("Item_Ticket", {
+    return apiV2.get("/apirest.php/Item_Ticket", {
         "searchText[tickets_id]": ticketId,
     })
 }
