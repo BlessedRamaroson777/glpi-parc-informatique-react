@@ -107,4 +107,5 @@ export async function runReset(entities, pushLog, dryRun = true) {
     }
 
     pushLog(dryRun ? "DRY-RUN terminé" : "Réinitialisation terminée ✓", "success")
+    alert(dryRun ? "DRY-RUN terminé — aucune suppression réelle" : "Réinitialisation terminée ✓")
 }

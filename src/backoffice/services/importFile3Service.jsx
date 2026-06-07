@@ -12,8 +12,10 @@
  *   - end_date    = begin_date + Duration_second
  */
 
+import apiV1 from "../../common/utils/apiV1.jsx"
 import { apiRequest } from "../../common/services/authService.jsx"
 import { parseCsv } from "../utils/importUtils.jsx"
+import { F3 } from "../constants/importConstants.jsx"
 
 
 // ── Helper : virgule décimale → point ────────────────────────────────────────
@@ -51,7 +53,7 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
     const costCounters = new Map()
 
     for (const row of rows) {
-        const ref = row.Num_Ticket
+        const ref = row[F3.NUM_TICKET]
 
         // Cherche d'abord dans la Map en mémoire (import complet)
         // Sinon cherche dans GLPI via external_id (import F3 seul)
@@ -83,32 +85,36 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
         const n = (costCounters.get(ref) ?? 0) + 1
         costCounters.set(ref, n)
 
-        const duration  = parseInt(row.Duration_second, 10) || 0
+        const duration  = parseInt(row[F3.DURATION_SECOND], 10) || 0
         const endDate   = duration > 0 ? addSeconds(beginDate, duration) : beginDate
 
         const payload = {
             name:           `Coût intervention #${n}`,
             tickets_id:     glpiId,
             actiontime:     duration,
-            cost_time:      toFloat(row.Time_Cost),
-            cost_fixed:     toFloat(row.Fixed_Cost),
+            cost_time:      toFloat(row[F3.TIME_COST]),
+            cost_fixed:     toFloat(row[F3.FIXED_COST]),
             cost_material:  0,                         // non fourni — généré à 0
             begin_date:     beginDate,
             end_date:       endDate,
         }
 
-        const url = `/api.php/v2/Assistance/Ticket/${glpiId}/Cost`
-        pushLog(`  CREATE ${url} « ${payload.name} » (fixed=${payload.cost_fixed}, time=${payload.cost_time})`, "warn")
+        pushLog(`  CREATE TicketCost « ${payload.name} » pour le ticket #${glpiId} (fixed=${payload.cost_fixed}, time=${payload.cost_time})`, "warn")
 
         if (!dryRun) {
-            const res = await apiRequest(url, {
-                method:  "POST",
-                headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ input: payload }),
-            })
-            const record = Array.isArray(res) ? res[0] : res
-            const newId  = record?.id ?? record?.data?.id ?? null
-            pushLog(`  ↳ Coût créé id=${newId}`, "success")
+            try {
+                const res = await apiV1.createItem("TicketCost", { input: payload })
+                const record = Array.isArray(res) ? res[0] : res
+                const newId  = record?.id ?? record?.data?.id ?? null
+                
+                if (newId) {
+                    pushLog(`  ↳ Coût créé id=${newId}`, "success")
+                } else {
+                    pushLog(`  ⚠ Erreur lors de la création du coût (pas d'ID retourné, réponse: ${JSON.stringify(res)})`, "error")
+                }
+            } catch (err) {
+                pushLog(`  ⚠ Erreur: ${err.message}`, "error")
+            }
         }
 
         count++

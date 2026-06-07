@@ -84,7 +84,7 @@ function toSlug(name) {
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/\s+/g, "_")
-        .replace(/[^a-z0-9.]/g, "")
+        .replace(/[^a-z0-9._]/g, "")
 }
 
 // ── Import principal ────────────────────────────────────────────────────────
@@ -205,7 +205,7 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
         const isMonitor  = row.Item_Type === "Monitor"
         if (!isComputer && !isMonitor) continue
 
-        const endpoint = isComputer ? "Assets/Computer" : "Assets/Monitor"
+        const itemtype = isComputer ? "Computer" : "Monitor"
         const modelKey = `${row.Item_Type}:${row.Model}`
 
         const payload = {
@@ -226,18 +226,28 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
             ),
         }
 
-        pushLog(`  CREATE ${endpoint} « ${row.Name} »`, "warn")
+        Object.keys(payload).forEach(k => {
+            if (payload[k] === 0 || payload[k] === null || payload[k] === undefined) {
+                delete payload[k]
+            }
+        })
+
+        pushLog(`  CREATE ${itemtype} « ${row.Name} »`, "warn")
 
         if (!dryRun) {
-            const res  = await apiRequest(`/api.php/v2/${endpoint}`, {
-                method:  "POST",
-                headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify(payload),
-            })
-            const newId = res?.id ?? res?.data?.id
-            pushLog(`  ↳ id=${newId}`, "success")
-            if (isComputer) computers.set(row.Name, newId)
-            else            monitors.set(row.Name, newId)
+            try {
+                const res = await apiV1.createItem(itemtype, { input: payload })
+                const newId = Array.isArray(res) ? res[0]?.id : res?.id
+                if (newId) {
+                    pushLog(`  ↳ id=${newId}`, "success")
+                    if (isComputer) computers.set(row.Name, newId)
+                    else            monitors.set(row.Name, newId)
+                } else {
+                    pushLog(`  ⚠ Erreur lors de la création de l'équipement (pas d'ID retourné)`, "error")
+                }
+            } catch (err) {
+                pushLog(`  ⚠ Erreur: ${err.message}`, "error")
+            }
         } else {
             if (isComputer) computers.set(row.Name, `DRY-${row.Name}`)
             else            monitors.set(row.Name, `DRY-${row.Name}`)

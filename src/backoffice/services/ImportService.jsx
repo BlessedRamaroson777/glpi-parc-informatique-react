@@ -96,11 +96,16 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
         pushLog("⚠ Feuille 3 non fournie — coûts ignorés", "warn")
     }
 
-    pushLog(
+    // pushLog(
+    //     dryRun
+    //         ? "✓ DRY-RUN terminé — aucune donnée insérée"
+    //         : "✓ Import complet terminé",
+    //     "success"
+    // )
+    alert(
         dryRun
-            ? "✓ DRY-RUN terminé — aucune donnée insérée"
-            : "✓ Import complet terminé",
-        "success"
+            ? "Import DRY-RUN terminé — aucune donnée insérée"
+            : "Import complet terminé"
     )
 
     return registry
