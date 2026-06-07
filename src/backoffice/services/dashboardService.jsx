@@ -2,6 +2,7 @@ import apiV2 from "../../common/utils/apiV2.jsx"
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 
 const BASE_V2 = "/api.php/v2.3"
+import apiV1 from "../../common/utils/apiV1.jsx"
 
 
 async function countAsset(type) {
@@ -23,6 +24,12 @@ async function countAsset(type) {
     if (!range) return 0
     return parseInt(range.split("/")[1]) || 0
 }
+
+async function countTicketsV1(criteria = {}) {
+    const res = await apiV1.search("Ticket", { ...criteria, limit: 0 })
+    return res?.totalcount ?? 0
+}
+
 
 export async function getDashboardData() {
     const { getAccessToken } = await import("../../common/services/authService.jsx")
@@ -62,6 +69,22 @@ export async function getDashboardData() {
     const BASE_TICKET = "/api.php/v2.3/Assistance/Ticket"
     const BASE_ASSET  = "/api.php/v2.3/Assets"
 
+    // const [
+    //     assetCounts,
+    //     ticketTotal,
+    //     ticketIncident,
+    //     ticketDemande,
+    // ] = await Promise.all([
+    //     Promise.all(ASSET_TYPES.map(async ({ key, label }) => ({
+    //         key, label,
+    //         count: await count(`${BASE_ASSET}/${key}`),
+    //     }))),
+    //     count(BASE_TICKET),
+    //     count(BASE_TICKET, "type==1"),
+    //     count(BASE_TICKET, "type==2"),
+    // ])
+    
+    // dans getDashboardData() :
     const [
         assetCounts,
         ticketTotal,
@@ -70,11 +93,11 @@ export async function getDashboardData() {
     ] = await Promise.all([
         Promise.all(ASSET_TYPES.map(async ({ key, label }) => ({
             key, label,
-            count: await count(`${BASE_ASSET}/${key}`),
+            count: await apiV2.count(`${BASE_ASSET}/${key}`),
         }))),
-        count(BASE_TICKET),
-        count(BASE_TICKET, "type==1"),
-        count(BASE_TICKET, "type==2"),
+        apiV2.count(BASE_TICKET),
+        apiV2.count(BASE_TICKET, "type==1"),
+        apiV2.count(BASE_TICKET, "type==2"),
     ])
 
     return {
@@ -84,7 +107,7 @@ export async function getDashboardData() {
         },
         tickets: {
             total: ticketTotal,
-            by_type:   { incident: ticketIncident, request: ticketDemande }
+            by_type: { 1: ticketIncident, 2: ticketDemande }
         }
     }
 }
