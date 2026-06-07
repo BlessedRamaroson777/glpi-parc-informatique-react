@@ -232,7 +232,7 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
             const res  = await apiRequest(`/api.php/v2/${endpoint}`, {
                 method:  "POST",
                 headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ input: payload }),
+                body:    JSON.stringify(payload),
             })
             const newId = res?.id ?? res?.data?.id
             pushLog(`  ↳ id=${newId}`, "success")
