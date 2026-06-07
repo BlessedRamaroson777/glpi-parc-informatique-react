@@ -1,16 +1,14 @@
 import JSZip from "jszip"
 import apiV1 from "../../common/utils/apiV1.jsx"
-import { apiRequest } from "../../common/services/authService.jsx"
 
 export async function runFile4Import(zipFile, pushLog, dryRun = false, registry = {}) {
     pushLog("═══ Feuille 4 : Images ═══", "info")
 
-    // Extraire le ZIP
     const zip = await JSZip.loadAsync(zipFile)
     const imageFiles = Object.entries(zip.files).filter(([name, file]) =>
         !file.dir &&
         !name.startsWith("__MACOSX") &&
-        !name.split("/").pop().startsWith("._") &&  // ← ajouter
+        !name.split("/").pop().startsWith("._") &&
         /\.(jpg|jpeg|png|gif|webp)$/i.test(name)
     )
 
@@ -19,13 +17,11 @@ export async function runFile4Import(zipFile, pushLog, dryRun = false, registry 
     let count = 0
 
     for (const [filename, zipEntry] of imageFiles) {
-        // ex: "PC-ADM-001.jpg" → assetName = "PC-ADM-001"
-        const baseName  = filename.split("/").pop() // gère les sous-dossiers
+        const baseName  = filename.split("/").pop()
         const assetName = baseName.replace(/\.[^.]+$/, "")
 
-        // Cherche l'ID GLPI dans le registre
-        const assetId   = registry.computers.get(assetName) ?? registry.monitors.get(assetName)
-        const itemtype  = registry.computers.has(assetName) ? "Computer" : "Monitor"
+        const assetId  = registry.computers.get(assetName) ?? registry.monitors.get(assetName)
+        const itemtype = registry.computers.has(assetName) ? "Computer" : "Monitor"
 
         if (!assetId) {
             pushLog(`  ⚠ Asset « ${assetName} » non trouvé dans le registre — ignoré`, "warn")
@@ -36,22 +32,26 @@ export async function runFile4Import(zipFile, pushLog, dryRun = false, registry 
         if (dryRun) { count++; continue }
 
         try {
-            // Convertir en Blob
             const blob = await zipEntry.async("blob")
-            const file = new File([blob], baseName, { type: blob.type || "image/jpeg" })
 
-            // Créer le document GLPI via V1 (multipart)
+            const ext = baseName.split(".").pop().toLowerCase()
+            const mimeMap = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp" }
+            const mimeType = mimeMap[ext] || "application/octet-stream"
+
+            const file = new File([blob], baseName, { type: mimeType })
+
             const formData = new FormData()
+            // "filename[0]" doit être la clé EXACTE — GLPI cherche $_FILES["filename"][0] côté PHP
             formData.append("uploadManifest", JSON.stringify({
                 input: {
-                    name:        baseName,
+                    name:        assetName,
                     itemtype,
                     items_id:    assetId,
                     entities_id: 0,
-                    _filename:   [baseName],
+                    _filename:   ["filename[0]"],
                 }
             }))
-            formData.append("filename[0]", file, baseName) 
+            formData.append("filename[0]", file, baseName)
 
             const res = await apiV1.post("Document", formData)
             const id  = Array.isArray(res) ? res[0]?.id : res?.id
