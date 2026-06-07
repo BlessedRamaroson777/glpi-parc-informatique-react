@@ -187,30 +187,32 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
             realname,
             firstname: parts[0],
             password:  `ITU@${new Date().getFullYear()}!`,
-            // _useremails: [{ email: `${name}@itu.mg` }],
-            is_active:  1,
-        }
-
-        // Vérifie si l'utilisateur existe déjà via V2
-        const existing = await apiRequest("/api.php/v2/Administration/User", { method: "GET" })
-        const items    = Array.isArray(existing) ? existing : (existing?.data ?? [])
-        const found    = items.find(u => u.name === name)
-
-        if (found) {
-            pushLog(`  ↳ User « ${name} » existe (id=${found.id})`, "info")
-            userIds.set(fullName, found.id)
-            continue
+            is_active: 1,
         }
 
         pushLog(`  ↳ CREATE User « ${name} »`, "warn")
         if (dryRun) { userIds.set(fullName, `DRY-${name}`); continue }
 
-        console.log("V1 config:", apiV1.getConfig?.() ?? "pas de getConfig")
-        // Création via V1
-        const res = await apiV1.createItem("User", { input: fields })
-        const id  = Array.isArray(res) ? res[0]?.id : res?.id
-        pushLog(`  ↳ Créé avec id=${id}`, "success")
-        userIds.set(fullName, id)
+        try {
+            const res = await apiV1.createItem("User", { input: fields })
+            const id  = Array.isArray(res) ? res[0]?.id : res?.id
+            pushLog(`  ↳ Créé avec id=${id}`, "success")
+            userIds.set(fullName, id)
+        } catch (err) {
+            if (err.message.includes("existe") || err.message.includes("ERROR_GLPI_ADD")) {
+                pushLog(`  ↳ User « ${name} » existe déjà — récupération de l'ID`, "warn")
+                const searchRes = await apiV1.search("User", {
+                    "criteria[0][field]":      1,
+                    "criteria[0][searchtype]": "contains",
+                    "criteria[0][value]":      name,
+                    "forcedisplay[0]":         2,
+                })
+                const id = searchRes?.data?.[0]?.[2]
+                userIds.set(fullName, id)
+            } else {
+                throw err
+            }
+        }
     }
 
     // ── Étape 3 : Assets ────────────────────────────────────────────────

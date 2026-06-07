@@ -14,6 +14,7 @@
  */
 
 import { apiRequest } from "../../common/services/authService.jsx"
+import apiV1 from "../../common/utils/apiV1.jsx"
 import { parseCsv } from "./importFile1Service.jsx"
 
 // ── Mappings ────────────────────────────────────────────────────────────────
@@ -141,15 +142,17 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
                 continue
             }
 
-            const itemUrl = `/api.php/v2/Assistance/Ticket/${glpiId}/Item`
-            pushLog(`  LINK ${itemUrl} ← ${assetName} (${resolved.itemtype})`, "warn")
+            pushLog(`  LINK Ticket ${glpiId} ← ${assetName} (${resolved.itemtype})`, "warn")
 
             if (!dryRun) {
-                await apiRequest(itemUrl, {
-                    method:  "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body:    JSON.stringify({ input: { ...resolved } }),
+                await apiV1.createItem("Item_Ticket", {
+                    input: {
+                        tickets_id: glpiId,
+                        itemtype:   resolved.itemtype,
+                        items_id:   resolved.items_id,
+                    }
                 })
+                pushLog(`  ↳ Lié`, "success")
             }
         }
     }
