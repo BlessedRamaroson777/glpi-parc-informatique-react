@@ -211,7 +211,7 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
         const payload = {
             name:             row.Name,
             otherserial:      row.Inventory_Number,
-            serial:           `SN-${row.Inventory_Number}`,   // généré
+            serial:           `${row.Inventory_Number}`,   // généré
             locations_id:     locationIds.get(row.Location)     ?? 0,
             manufacturers_id: manufacturerIds.get(row.Manufacturer) ?? 0,
             states_id:        stateIds.get(row.Status)          ?? 0,

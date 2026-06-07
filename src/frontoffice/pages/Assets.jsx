@@ -1,5 +1,5 @@
 import React from "react"
-import { getAllAssets } from "../services/assetsService.jsx"
+import { getAllAssets, getFilterOptions } from "../services/assetsService.jsx"
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 import "../styles/assets.css"
 
@@ -74,10 +74,14 @@ export default function Assets() {
     const [assets, setAssets] = React.useState([])
     const [loading, setLoading] = React.useState(true)
     const [filters, setFilters] = React.useState(EMPTY_FILTERS)
+    const [filterOptions, setFilterOptions] = React.useState({ locations: [], entities: [], manufacturers: [], statuses: [] })
 
     React.useEffect(() => {
-        getAllAssets()
-            .then(setAssets)
+        Promise.all([getAllAssets(), getFilterOptions()])
+            .then(([assetsData, optionsData]) => {
+                setAssets(assetsData)
+                setFilterOptions(optionsData)
+            })
             .finally(() => setLoading(false))
     }, [])
 
@@ -94,11 +98,12 @@ export default function Assets() {
         k === "type" ? v !== "all" : v !== ""
     )
     
-    const locations = getUniqueValues(assets, "location")
-    const entities = getUniqueValues(assets, "entity")
-    const manufacturers = getUniqueValues(assets, "manufacturer")
+    const locations = filterOptions.locations
+    const entities = filterOptions.entities
+    const manufacturers = filterOptions.manufacturers
+    // const models = filterOptions.models
     const models = getUniqueValues(assets, "model")
-    const statuses = getUniqueValues(assets, "status")
+    const statuses = filterOptions.statuses
 
     return (
         <section className="assets-page">

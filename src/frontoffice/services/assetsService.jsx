@@ -3,6 +3,13 @@ import apiV1 from "../../common/utils/apiV1.jsx"
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 
 const BASE_V2 = "/api.php/v2.3/Assets"
+const DROPDOWN_ENDPOINTS = {
+    Location:     "Dropdowns/Location",
+    Entity:       "Administration/Entity", 
+    Manufacturer: "Dropdowns/Manufacturer",
+    State:        "Dropdowns/State",
+}
+
 // Normalise un asset brut V2 en objet simple
 function normalize(item, type) {
     return {
@@ -61,4 +68,27 @@ export async function searchAssets(name, type = "Computer") {
         type,
         typeLabel: ASSET_TYPES.find(t => t.key === type)?.label ?? type,
     }))
+}
+
+export async function getDropdownOptions(itemType) {
+    try {
+        const endpoint = DROPDOWN_ENDPOINTS[itemType]
+        if (!endpoint) return []
+        const data = await apiV2.get(`/api.php/v2.3/${endpoint}`)
+        return Array.isArray(data) ? data.map(item => item.completename || item.name).filter(Boolean) : []
+    } catch (err) {
+        console.error(`Failed to fetch ${itemType} options`, err)
+        return []
+    }
+}
+
+export async function getFilterOptions() {
+    const [locations, entities, manufacturers, statuses] = await Promise.all([
+        getDropdownOptions("Location"),
+        getDropdownOptions("Entity"),
+        getDropdownOptions("Manufacturer"),
+        getDropdownOptions("State"),
+    ]);
+
+    return { locations, entities, manufacturers, statuses }; // models depends on asset type
 }
