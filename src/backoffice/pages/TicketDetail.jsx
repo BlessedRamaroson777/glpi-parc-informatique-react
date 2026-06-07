@@ -2,11 +2,12 @@ import React from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { getTicketById, getTicketItems } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
+import { TICKET_STATUS, TICKET_PRIORITIES, TICKET_TYPES } from "../../common/constants/TicketConstants.jsx";
 import "../styles/tickets.css"; // Importation du fichier CSS
 
-const STATUS_LABELS   = { 1: "Nouveau", 2: "Attribué", 3: "Planifié", 4: "En attente", 5: "Résolu", 6: "Clos" };
-const PRIORITY_LABELS = { 1: "Très basse", 2: "Basse", 3: "Moyenne", 4: "Haute", 5: "Très haute", 6: "Majeure" };
-const TYPE_LABELS     = { 1: "Incident", 2: "Demande" };
+const STATUS_LABELS   = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
+const PRIORITY_LABELS = Object.fromEntries(TICKET_PRIORITIES.map(s => [s.value, s.label]));
+const TYPE_LABELS     = Object.fromEntries(TICKET_TYPES.map(s => [s.value, s.label]));
 
 function Badge({ status }) {
   return <span className={`badge badge-status-${status}`}>{STATUS_LABELS[status] || `Statut ${status}`}</span>;
@@ -109,7 +110,7 @@ export default function TicketDetail() {
           <ul className="linked-items-list">
               {items.map((item, i) => (
                   <li key={i} className="linked-item">
-                      {item.itemtype} — {item.items_id}
+                      {item.itemtype} #{item.items_id}
                   </li>
               ))}
           </ul>

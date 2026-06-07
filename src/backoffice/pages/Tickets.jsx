@@ -2,9 +2,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getTickets, searchTickets } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
+import { TICKET_STATUS } from "../../common/constants/TicketConstants.jsx";
 import "../styles/tickets.css"; // Importation du même fichier CSS
 
-const STATUS_LABELS = { 1: "Nouveau", 2: "Attribué", 3: "Planifié", 4: "En attente", 5: "Résolu", 6: "Clos" };
+const STATUS_LABELS = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
 
 function Badge({ status }) {
   return <span className={`badge badge-list badge-status-${status}`}>{STATUS_LABELS[status] || `Statut ${status}`}</span>;
