@@ -1,152 +1,312 @@
 export const RESET_CONFIG = {
 
-  // ── 1. Sous-ressources tickets EN PREMIER ─────────────────────────────────
+    // ── Assistance ─────────────────────────────
 
-  ticket_costs: {
-    group: 'Assistance',
-    label: 'Coûts des tickets',
-    endpoint: 'Assistance/Ticket/{id}/Cost',
-    order: 1,
-    dependencies: ['tickets'],
-    description: '2 entrées de coût sur le ticket 1 (page 3 du PDF)',
-  },
-  ticket_followups: {
-    group: 'Assistance',
-    label: 'Suivis des tickets',
-    endpoint: 'Assistance/Ticket/{id}/Timeline/Followup',
-    order: 1.1,
-    dependencies: ['tickets'],
-    description: 'Suivis auto créés par GLPI ou manuellement',
-  },
-  ticket_documents: {
-    group: 'Assistance',
-    label: 'Documents des tickets',
-    endpoint: 'Assistance/Ticket/{id}/Timeline/Document',
-    order: 1.2,
-    dependencies: ['tickets'],
-    description: 'Documents attachés dans la timeline',
-  },
-  ticket_team_members: {
-    group: 'Assistance',
-    label: 'Membres des tickets',
-    endpoint: 'Assistance/Ticket/{id}/TeamMember',
-    order: 1.3,
-    dependencies: ['tickets'],
-    description: 'Liens assets ↔ tickets (PC-ADM-001, MN-FORM-002)',
-  },
+    tickets: {
+        group: "Assistance",
+        label: "Tickets",
+        endpoint: "Assistance/Ticket",
+        order: 1,
+        dependencies: [],
+        description: "Ticket 1 (Tsy mandeha) et Ticket 2 (Michauffe). Purge auto: suivis, coûts, membres et liaisons documents.",
+    },
 
-  // ── 2. Tickets ────────────────────────────────────────────────────────────
+    problems: {
+        group: "Assistance",
+        label: "Problèmes",
+        endpoint: "Assistance/Problem",
+        order: 2,
+        dependencies: [],
+        description: "Tous les problèmes ITIL.",
+    },
 
-  tickets: {
-    group: 'Assistance',
-    label: 'Tickets',
-    endpoint: 'Assistance/Ticket',
-    order: 2,
-    dependencies: [],
-    description: 'Ticket 1 (Tsy mandeha) et Ticket 2 (Michauffe) du PDF',
-  },
+    changes: {
+        group: "Assistance",
+        label: "Changements",
+        endpoint: "Assistance/Change",
+        order: 3,
+        dependencies: [],
+        description: "Tous les changements ITIL.",
+    },
 
-  // ── 3. Sous-ressources assets ─────────────────────────────────────────────
-  
+    // ── Assets ─────────────────────────────
 
-  // computer_infocom: {
-  //   group: 'Assets',
-  //   label: 'Infocoms des ordinateurs',
-  //   endpoint: 'Assets/Computer/{id}/Infocom',
-  //   order: 3,
-  //   dependencies: ['computers'],
-  //   description: 'Fiches financières auto-créées sur les 9 PC',
-  // },
-  // monitor_infocom: {
-  //   group: 'Assets',
-  //   label: 'Infocom du moniteur',
-  //   endpoint: 'Assets/Monitor/{id}/Infocom',
-  //   order: 3.1,
-  //   dependencies: ['monitors'],
-  //   description: 'Fiche financière auto-créée sur MN-FORM-002',
-  // },
+    computers: {
+        group: "Assets",
+        label: "Ordinateurs",
+        endpoint: "Assets/Computer",
+        order: 4,
+        dependencies: [],
+        description: "9 PC du PDF. Purge auto: Infocoms, composants internes.",
+    },
 
+    monitors: {
+        group: "Assets",
+        label: "Moniteurs",
+        endpoint: "Assets/Monitor",
+        order: 5,
+        dependencies: [],
+        description: "MN-FORM-002. Purge auto: Infocom.",
+    },
 
-  // ── 4. Assets ─────────────────────────────────────────────────────────────
+    network_equipments: {
+        group: "Assets",
+        label: "Équipements réseau",
+        endpoint: "Assets/NetworkEquipment",
+        order: 6,
+        dependencies: [],
+        description: "Tous les équipements réseau.",
+    },
 
-  computers: {
-    group: 'Assets',
-    label: 'Ordinateurs',
-    endpoint: 'Assets/Computer',
-    order: 4,
-    dependencies: ['users', 'locations', 'manufacturers', 'states', 'computer_models'],
-    description: '9 PC du PDF',
-  },
-  monitors: {
-    group: 'Assets',
-    label: 'Moniteurs',
-    endpoint: 'Assets/Monitor',
-    order: 4.1,
-    dependencies: ['users', 'locations', 'manufacturers', 'states', 'monitor_models'],
-    description: 'MN-FORM-002',
-  },
+    peripherals: {
+        group: "Assets",
+        label: "Périphériques",
+        endpoint: "Assets/Peripheral",
+        order: 7,
+        dependencies: [],
+        description: "Tous les périphériques.",
+    },
 
-  // ── 5. Utilisateurs ───────────────────────────────────────────────────────
+    phones: {
+        group: "Assets",
+        label: "Téléphones",
+        endpoint: "Assets/Phone",
+        order: 8,
+        dependencies: [],
+        description: "Tous les téléphones.",
+    },
 
-  users: {
-    group: 'Administration',
-    label: 'Utilisateurs',
-    endpoint: 'Administration/User',
-    order: 5,
-    dependencies: [],
-    description: 'Rakoto Jean, Rasoanaivo Marie, Rakotondranaivo Paul, Rabe Hanitra, Rakoto Michel',
-  },
+    printers: {
+        group: "Assets",
+        label: "Imprimantes",
+        endpoint: "Assets/Printer",
+        order: 9,
+        dependencies: [],
+        description: "Toutes les imprimantes.",
+    },
 
-  // ── 6. Référentiels EN DERNIER ────────────────────────────────────────────
+    softwares: {
+        group: "Assets",
+        label: "Logiciels",
+        endpoint: "Assets/Software",
+        order: 10,
+        dependencies: [],
+        description: "Tous les logiciels.",
+    },
 
-  computer_models: {
-    group: 'Référentiels',
-    label: 'Modèles d\'ordinateurs',
-    endpoint: 'Dropdowns/ComputerModel',
-    order: 6,
-    dependencies: [],
-    description: '9 modèles PC du PDF',
-  },
-  monitor_models: {
-    group: 'Référentiels',
-    label: 'Modèles de moniteurs',
-    endpoint: 'Dropdowns/MonitorModel',
-    order: 6.1,
-    dependencies: [],
-    description: 'AC1000',
-  },
-  manufacturers: {
-    group: 'Référentiels',
-    label: 'Fabricants',
-    endpoint: 'Dropdowns/Manufacturer',
-    order: 6.2,
-    dependencies: [],
-    description: 'Dell, HP, Lenovo',
-  },
-  locations: {
-    group: 'Référentiels',
-    label: 'Localisations',
-    endpoint: 'Dropdowns/Location',
-    order: 6.3,
-    dependencies: [],
-    description: 'Administration, Comptabilité, Laboratoire IA, Bibliothèque, Salle 301, Magasin Informatique',
-  },
-  states: {
-    group: 'Référentiels',
-    label: 'États',
-    endpoint: 'Dropdowns/State',
-    order: 6.4,
-    dependencies: [],
-    description: 'En production, Maintenance, En stock, En panne',
-  },
+    software_licenses: {
+        group: "Assets",
+        label: "Licences logicielles",
+        endpoint: "Assets/SoftwareLicense",
+        order: 11,
+        dependencies: [],
+        description: "Toutes les licences logicielles.",
+    },
+
+    certificates: {
+        group: "Assets",
+        label: "Certificats",
+        endpoint: "Assets/Certificate",
+        order: 12,
+        dependencies: [],
+        description: "Tous les certificats.",
+    },
+
+    appliances: {
+        group: "Assets",
+        label: "Applicatifs",
+        endpoint: "Assets/Appliance",
+        order: 13,
+        dependencies: [],
+        description: "Tous les applicatifs.",
+    },
+
+    racks: {
+        group: "Assets",
+        label: "Baies serveur",
+        endpoint: "Assets/Rack",
+        order: 14,
+        dependencies: [],
+        description: "Toutes les baies serveur.",
+    },
+
+    enclosures: {
+        group: "Assets",
+        label: "Châssis",
+        endpoint: "Assets/Enclosure",
+        order: 15,
+        dependencies: [],
+        description: "Tous les châssis.",
+    },
+
+    pdus: {
+        group: "Assets",
+        label: "PDU",
+        endpoint: "Assets/PDU",
+        order: 16,
+        dependencies: [],
+        description: "Toutes les unités de distribution électrique.",
+    },
+
+    passive_dc_equipments: {
+        group: "Assets",
+        label: "Équipements passifs DC",
+        endpoint: "Assets/PassiveDCEquipment",
+        order: 17,
+        dependencies: [],
+        description: "Tous les équipements passifs de datacenter.",
+    },
+
+    cables: {
+        group: "Assets",
+        label: "Câbles",
+        endpoint: "Assets/Cable",
+        order: 18,
+        dependencies: [],
+        description: "Tous les câbles.",
+    },
+
+    sockets: {
+        group: "Assets",
+        label: "Prises",
+        endpoint: "Assets/Socket",
+        order: 19,
+        dependencies: [],
+        description: "Toutes les prises.",
+    },
+
+    unmanaged: {
+        group: "Assets",
+        label: "Assets non gérés",
+        endpoint: "Assets/Unmanaged",
+        order: 20,
+        dependencies: [],
+        description: "Tous les assets non gérés.",
+    },
+
+    // ── Gestion ─────────────────────────────
+
+    documents: {
+        group: "Gestion",
+        label: "Documents",
+        endpoint: "Management/Document",
+        order: 21,
+        dependencies: [],
+        description: "Supprime les documents et fichiers physiques.",
+    },
+
+    contracts: {
+        group: "Gestion",
+        label: "Contrats",
+        endpoint: "Management/Contract",
+        order: 22,
+        dependencies: [],
+        description: "Tous les contrats.",
+    },
+
+    suppliers: {
+        group: "Gestion",
+        label: "Fournisseurs",
+        endpoint: "Management/Supplier",
+        order: 23,
+        dependencies: [],
+        description: "Tous les fournisseurs.",
+    },
+
+    contacts: {
+        group: "Gestion",
+        label: "Contacts",
+        endpoint: "Management/Contact",
+        order: 24,
+        dependencies: [],
+        description: "Tous les contacts.",
+    },
+
+    budgets: {
+        group: "Gestion",
+        label: "Budgets",
+        endpoint: "Management/Budget",
+        order: 25,
+        dependencies: [],
+        description: "Tous les budgets.",
+    },
+
+    // ── Projets ─────────────────────────────
+
+    tasks: {
+        group: "Projets",
+        label: "Tâches",
+        endpoint: "Project/Task",
+        order: 26,
+        dependencies: [],
+        description: "Toutes les tâches de projet.",
+    },
+
+    // ── Administration ─────────────────────────────
+
+    users: {
+        group: "Administration",
+        label: "Utilisateurs",
+        endpoint: "Administration/User",
+        order: 27,
+        dependencies: [],
+        description: "Rakoto Jean, Rasoanaivo Marie, Rakotondranaivo Paul, Rabe Hanitra, Rakoto Michel",
+    },
+
+    // ── Référentiels ─────────────────────────────
+
+    computer_models: {
+        group: "Référentiels",
+        label: "Modèles d'ordinateurs",
+        endpoint: "Dropdowns/ComputerModel",
+        order: 28,
+        dependencies: [],
+        description: "9 modèles PC du PDF",
+    },
+
+    monitor_models: {
+        group: "Référentiels",
+        label: "Modèles de moniteurs",
+        endpoint: "Dropdowns/MonitorModel",
+        order: 29,
+        dependencies: [],
+        description: "AC1000",
+    },
+
+    manufacturers: {
+        group: "Référentiels",
+        label: "Fabricants",
+        endpoint: "Dropdowns/Manufacturer",
+        order: 30,
+        dependencies: [],
+        description: "Dell, HP, Lenovo",
+    },
+
+    locations: {
+        group: "Référentiels",
+        label: "Localisations",
+        endpoint: "Dropdowns/Location",
+        order: 31,
+        dependencies: [],
+        description: "Administration, Comptabilité, Laboratoire IA, Bibliothèque, Salle 301, Magasin Informatique",
+    },
+
+    states: {
+        group: "Référentiels",
+        label: "États",
+        endpoint: "Dropdowns/State",
+        order: 32,
+        dependencies: [],
+        description: "En production, Maintenance, En stock, En panne",
+    },
 }
 
-
 export const PROTECTED_IDS = {
-  users: [2, 3, 4, 5, 6],
-  states:           [],  
-  locations:        [],  
-  manufacturers:    [],  
-  computer_models:  [],  
-  monitor_models:   [],  
+    users: [2, 3, 4, 5, 6],
+
+    computer_models: [],
+    monitor_models: [],
+    manufacturers: [],
+    locations: [],
+    states: [],
 }
