@@ -195,7 +195,7 @@ textarea.form-control {
 }
 
 .btn-submit {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: #3b82f6;
     color: white;
     border: none;
     padding: 0.8rem 2rem;
@@ -203,13 +203,10 @@ textarea.form-control {
     font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
-    transition: all 0.3s ease;
 }
 
 .btn-submit:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
 .btn-submit:disabled {
