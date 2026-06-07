@@ -123,8 +123,8 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
         let glpiId = `DRY-TICKET-${ref}`
 
         if (!dryRun) {
-            console.log("Payload ticket:", JSON.stringify({ input: payload }))
-            console.log("F2.TITRE =", F2.TITRE, "| valeur =", row[F2.TITRE])
+            // console.log("Payload ticket:", JSON.stringify({ input: payload }))
+            // console.log("F2.TITRE =", F2.TITRE, "| valeur =", row[F2.TITRE])
             try {
                 const res = await apiV1.createItem("Ticket", { input: payload })
                 glpiId = res?.id ?? null

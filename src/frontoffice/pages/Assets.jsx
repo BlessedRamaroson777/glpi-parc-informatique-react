@@ -10,7 +10,7 @@ const EMPTY_FILTERS = {
     entity: "",
     location: "",
     user: "",
-    user_tech: "",
+    // user_tech: "",
     manufacturer: "",
     model: "",
     status: "",
@@ -56,7 +56,7 @@ function matches(asset, filters) {
         contains(asset.name, filters.name) &&
         contains(asset.serial, filters.serial) &&
         contains(asset.user, filters.user) &&
-        contains(asset.user_tech, filters.user_tech) &&
+        // contains(asset.user_tech, filters.user_tech) &&
         exactMatch(asset.status, filters.status) &&
         exactMatch(asset.location, filters.location) &&
         exactMatch(asset.manufacturer, filters.manufacturer) &&
@@ -132,7 +132,7 @@ export default function Assets() {
                 <DropdownFilter label="Entité" value={filters.entity} onChange={set("entity")} options={entities} />
                 <DropdownFilter label="Localisation" value={filters.location} onChange={set("location")} options={locations} />
                 <Input label="Utilisateur" value={filters.user} onChange={set("user")} />
-                <Input label="Technicien" value={filters.user_tech} onChange={set("user_tech")} />
+                {/* <Input label="Technicien" value={filters.user_tech} onChange={set("user_tech")} /> */}
                 <DropdownFilter label="Fabricant" value={filters.manufacturer} onChange={set("manufacturer")} options={manufacturers} />
                 <DropdownFilter label="Modèle" value={filters.model} onChange={set("model")} options={models} />
                 <DropdownFilter label="Statut" value={filters.status} onChange={set("status")} options={statuses} />
