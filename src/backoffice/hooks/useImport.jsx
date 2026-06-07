@@ -32,7 +32,11 @@ export function useImport() {
     // ── Gestion des fichiers ─────────────────────────────────────────────
 
     const setFile = useCallback((slot, file) => {
-        if (!file) return
+        if (!file) {
+            setFiles(prev     => ({ ...prev, [slot]: null }))
+            setFileNames(prev => ({ ...prev, [slot]: "" }))
+            return
+        }
         const reader = new FileReader()
         reader.onload = e => {
             setFiles(prev     => ({ ...prev, [slot]: e.target.result }))

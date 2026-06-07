@@ -1,3 +1,4 @@
+import React, { useRef } from "react"
 import { useImport }      from "../hooks/useImport.jsx"
 import LogPanel           from "../components/LogPanel.jsx"
 import ImportStepper      from "../components/ImportStepper.jsx"
@@ -62,46 +63,130 @@ export default function Import() {
         handleImport,
     } = useImport()
 
+    // Références pour manipuler la valeur textuelle des inputs natifs
+    const file1Ref = useRef(null)
+    const file2Ref = useRef(null)
+    const file3Ref = useRef(null)
+    const file4Ref = useRef(null)
+
     const hasAnyStep = currentStep !== null || doneSteps.size > 0
+
+    // Nettoie à la fois le hook d'importation et l'état visuel du DOM
+    function handleClearFile(key, inputRef) {
+        setFile(key, null)
+        if (inputRef.current) {
+            inputRef.current.value = ""
+        }
+    }
 
     return (
         <section className="import-page">
             <h1>Import des données</h1>
 
             <div className="import-form">
-                <label>
-                    Fichier des équipements
-                    <input
-                        type="file"
-                        accept=".csv"
-                        onChange={e => setFile("file1", e.target.files[0])}
-                    />
-                </label>
+                
+                {/* CHAMP 1 : ÉQUIPEMENTS */}
+                <div className="file-field-group">
+                    <label>
+                        Fichier des équipements
+                        <input
+                            type="file"
+                            accept=".csv"
+                            ref={file1Ref}
+                            disabled={busy}
+                            onChange={e => setFile("file1", e.target.files[0] || null)}
+                        />
+                    </label>
+                    {fileNames?.file1 && (
+                        <button
+                            type="button"
+                            className="clear-file-btn"
+                            disabled={busy}
+                            onClick={() => handleClearFile("file1", file1Ref)}
+                        >
+                            Reinitialiser
+                        </button>
+                    )}
+                </div>
 
-                <label>
-                    Fichier des tickets
-                    <input
-                        type="file"
-                        accept=".csv"
-                        onChange={e => setFile("file2", e.target.files[0])}
-                    />
-                </label>
+                {/* CHAMP 2 : TICKETS */}
+                <div className="file-field-group">
+                    <label>
+                        Fichier des tickets
+                        <input
+                            type="file"
+                            accept=".csv"
+                            ref={file2Ref}
+                            disabled={busy}
+                            onChange={e => setFile("file2", e.target.files[0] || null)}
+                        />
+                    </label>
+                    {fileNames?.file2 && (
+                        <button
+                            type="button"
+                            className="clear-file-btn"
+                            disabled={busy}
+                            onClick={() => handleClearFile("file2", file2Ref)}
+                        >
+                            Reinitialiser
+                        </button>
+                    )}
+                </div>
 
-                <label>
-                    Fichier des coûts
-                    <input
-                        type="file"
-                        accept=".csv"
-                        onChange={e => setFile("file3", e.target.files[0])}
-                    />
-                </label>
+                {/* CHAMP 3 : COÛTS */}
+                <div className="file-field-group">
+                    <label>
+                        Fichier des coûts
+                        <input
+                            type="file"
+                            accept=".csv"
+                            ref={file3Ref}
+                            disabled={busy}
+                            onChange={e => setFile("file3", e.target.files[0] || null)}
+                        />
+                    </label>
+                    {fileNames?.file3 && (
+                        <button
+                            type="button"
+                            className="clear-file-btn"
+                            disabled={busy}
+                            onClick={() => handleClearFile("file3", file3Ref)}
+                        >
+                            Reinitialiser
+                        </button>
+                    )}
+                </div>
+                
+                {/* CHAMP 4 : IMAGES */}
+                <div className="file-field-group">
+                    <label>
+                        Fichier des images
+                        <input
+                            type="file"
+                            accept=".zip"
+                            ref={file4Ref}
+                            disabled={busy}
+                            onChange={e => setFile("file4", e.target.files[0] || null)}
+                        />
+                    </label>
+                    {fileNames?.file4 && (
+                        <button
+                            type="button"
+                            className="clear-file-btn"
+                            disabled={busy}
+                            onClick={() => handleClearFile("file4", file4Ref)}
+                        >
+                            Reinitialiser
+                        </button>
+                    )}
+                </div>
 
-                <button onClick={handleImport}>
+                <button onClick={handleImport} disabled={!canImport || busy} className="import-submit-btn">
                     Importer
                 </button>
             </div>
 
-            {busy && <p>Import en cours...</p>}
+            {busy && <p className="import-status">Import en cours...</p>}
 
             <LogPanel
                 logs={logs}
