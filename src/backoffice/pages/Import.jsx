@@ -138,7 +138,7 @@ export default function Import() {
                 >
                     {busy
                         ? <><span className="import-spinner" /> Import en cours…</>
-                        : `🚀 Lancer l'import${dryRun ? " (DRY-RUN)" : ""}`
+                        : `Importer${dryRun ? " (DRY-RUN)" : ""}`
                     }
                 </button>
 
