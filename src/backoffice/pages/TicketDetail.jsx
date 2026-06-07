@@ -2,6 +2,7 @@ import React from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { getTicketById, getTicketItems } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
+import TicketCost from "../../common/entities/TicketCost.jsx";
 import { TICKET_STATUS, TICKET_PRIORITIES, TICKET_TYPES } from "../../common/constants/TicketConstants.jsx";
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx";
 import apiV1 from "../../common/utils/apiV1.jsx";
@@ -30,12 +31,29 @@ function fmt(iso) {
   return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function formatDuration(seconds) {
+  if (!seconds) return "—";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function formatCurrency(amount) {
+  if (amount === null || amount === undefined) return "—";
+  return Number(amount).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+}
+
 export default function TicketDetail() {
   const { id } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
   const [ticket, setTicket] = React.useState(state?.ticket ?? null);
-  const [items, setItems] = React.useState([])
+  const [items, setItems] = React.useState([]);
+  const [costs, setCosts] = React.useState([]);
+  const [costsLoading, setCostsLoading] = React.useState(false);
 
   React.useEffect(() => {
       if (ticket?.id) {
@@ -54,6 +72,20 @@ export default function TicketDetail() {
           
           setItems(resolvedItems)
       }).catch(() => setItems([]))
+
+        // Fetch costs (from File 3 import)
+        setCostsLoading(true);
+        const costEntity = new TicketCost();
+        costEntity.getByTicket(ticket.id)
+          .then(data => {
+            console.log("Coûts liés :", data);
+            setCosts(data);
+          })
+          .catch((err) => {
+            console.warn("Erreur récupération coûts :", err);
+            setCosts([]);
+          })
+          .finally(() => setCostsLoading(false));
       }
   }, [ticket?.id])
 
@@ -64,6 +96,12 @@ export default function TicketDetail() {
   }, [id]);
 
   if (!ticket) return <p className="loading-text">Chargement…</p>;
+
+  const totalCosts = costs.reduce((sum, c) => {
+    const hours = (c.duration || 0) / 3600;
+    const timeCost = (c.cost_time || 0) * hours;
+    return sum + (c.cost_fixed || 0) + (c.cost_material || 0) + timeCost;
+  }, 0);
 
   return (
     <section className="ticket-detail-container">
@@ -137,6 +175,68 @@ export default function TicketDetail() {
           </ul>
       </div>
     )}
+    <div className="info-section">
+      <p className="section-title">Coûts d'intervention ({costs.length})</p>
+      
+      {costsLoading ? (
+          <p className="loading-text">Chargement des coûts...</p>
+      ) : costs.length === 0 ? (
+          <p className="empty-text">Aucun coût enregistré pour ce ticket.</p>
+      ) : (
+          <div className="costs-list">
+              {costs.map((cost, i) => {
+                  const hours = (cost.duration || 0) / 3600;
+                  const timeCost = (cost.cost_time || 0) * hours;
+                  const subtotal = (cost.cost_fixed || 0) + (cost.cost_material || 0) + timeCost;
+
+                  return (
+                      <div key={cost.id || i} className="cost-card">
+                          <div className="cost-card-header">
+                              <span className="cost-title">
+                                  {cost.name || `Coût #${i + 1}`}
+                              </span>
+                              <span className="cost-amount">
+                                  {formatCurrency(subtotal)}
+                              </span>
+                          </div>
+
+                          <div className="cost-card-details">
+                              <div className="cost-row">
+                                  <span className="cost-label">Durée</span>
+                                  <span className="cost-value">
+                                      {formatDuration(cost.duration || cost.actiontime)}
+                                  </span>
+                              </div>
+                              <div className="cost-row">
+                                  <span className="cost-label">Coût horaire</span>
+                                  <span className="cost-value">
+                                      {formatCurrency(cost.cost_time)}
+                                  </span>
+                              </div>
+                              <div className="cost-row">
+                                  <span className="cost-label">Coût fixe</span>
+                                  <span className="cost-value">
+                                      {formatCurrency(cost.cost_fixed)}
+                                  </span>
+                              </div>
+                              <div className="cost-row">
+                                  <span className="cost-label">Coût matériel</span>
+                                  <span className="cost-value">
+                                      {formatCurrency(cost.cost_material)}
+                                  </span>
+                              </div>
+                          </div>
+                      </div>
+                  )
+              })}
+
+              <div className="cost-total-bar">
+                  <strong>Total Général</strong>
+                  <strong>{formatCurrency(totalCosts)}</strong>
+              </div>
+          </div>
+      )}
+    </div>
     </section>
   );
 }

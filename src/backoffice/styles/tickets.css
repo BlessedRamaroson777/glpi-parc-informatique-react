@@ -262,3 +262,77 @@
     border: 1px solid #e5e7eb;
     border-radius: 6px;
 }
+
+/* --- Coûts --- */
+
+.costs-section {
+    margin-top: 1.5rem;
+}
+
+.costs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cost-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.cost-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cost-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+}
+
+.cost-amount {
+    font-size: 14px;
+    font-weight: 600;
+    color: #16a34a;
+}
+
+.cost-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cost-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 4px;
+}
+
+.cost-label {
+    color: #6b7280;
+}
+
+.cost-value {
+    color: #111;
+}
+
+.costs-total {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    display: flex;
+    justify-content: space-between;
+
+    font-weight: 600;
+    color: #111;
+}

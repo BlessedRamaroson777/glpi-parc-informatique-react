@@ -94,11 +94,11 @@ export default function Dashboard() {
             <Block title="Tickets" total={tickets?.total ?? 0}>
                 <SectionTitle>Par type</SectionTitle>
 
-                {TICKET_TYPES.map(({ key, label }) => (
+                {TICKET_TYPES.map((tType) => (
                     <Row
-                        key={key}
-                        label={label}
-                        value={tickets?.by_type?.[key] ?? 0}
+                        key={tType.value}
+                        label={tType.label}
+                        value={tickets?.by_type?.[tType.value] ?? 0}
                     />
                 ))}
 
