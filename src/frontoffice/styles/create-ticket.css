@@ -1,7 +1,7 @@
 .create-ticket-page {
     padding: 2rem;
     max-width: 1600px;
-    margin: 0 auto;
+    /* margin: 0 auto; */
     font-family: 'Inter', system-ui, sans-serif;
     color: #333;
     animation: fadeIn 0.4s ease-out;
@@ -234,4 +234,9 @@ textarea.form-control {
     background-color: #fee2e2;
     color: #b91c1c;
     border: 1px solid #fecaca;
+}
+.border-section {
+    border-top: 1px solid #e5e7eb;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
 }

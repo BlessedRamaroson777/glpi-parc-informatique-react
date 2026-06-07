@@ -1,4 +1,5 @@
 import apiV1 from "../../common/utils/apiV1.jsx"
+import apiV2 from "../../common/utils/apiV2.jsx"
 
 /**
  * Creates a new ticket in GLPI
@@ -36,4 +37,28 @@ export async function linkElementToTicket(tickets_id, itemtype, items_id) {
         console.error(`Error linking ${itemtype} ${items_id} to ticket ${tickets_id}:`, error);
         throw error;
     }
+}
+
+// Récupérer les catégories ITIL
+export async function getITILCategories() {
+    const data = await apiV2.get("/api.php/v2.3/Dropdowns/ITILCategory?range=0-200");
+    return Array.isArray(data) ? data : (data?.data ?? []);
+}
+
+// Récupérer les sources de demande
+export async function getRequestTypes() {
+    const data = await apiV2.get("/api.php/v2.3/Dropdowns/RequestType?range=0-200");
+    return Array.isArray(data) ? data : (data?.data ?? []);
+}
+
+// Récupérer les localisations
+export async function getLocations() {
+    const data = await apiV2.get("/api.php/v2.3/Dropdowns/Location?range=0-200");
+    return Array.isArray(data) ? data : (data?.data ?? []);
+}
+
+// Récupérer les utilisateurs pour les acteurs
+export async function getUsers() {
+    const data = await apiV2.get("/api.php/v2.3/Administration/User?range=0-200");
+    return Array.isArray(data) ? data : (data?.data ?? []);
 }
