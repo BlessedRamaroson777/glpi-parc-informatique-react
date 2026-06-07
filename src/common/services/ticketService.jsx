@@ -47,8 +47,10 @@ export async function searchTickets(name) {
     }))
 }
 
-export function getTicketItems(ticketId) {
-    return apiV1.get("Item_Ticket", {   // ← apiV1, pas apiV2
+export async function getTicketItems(ticketId) {
+    const result = await apiV1.get("Item_Ticket", {
         "searchText[tickets_id]": ticketId,
     })
+
+    return result
 }

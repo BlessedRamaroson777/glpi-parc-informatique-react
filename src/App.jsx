@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import FrontofficeApp from "./frontoffice/App.jsx";
 import BackofficeApp from "./backoffice/App.jsx";
 import SelectApp from "./common/pages/selectedApp.jsx";
+import apiV1 from "./common/utils/apiV1.jsx"
+
+apiV1.loadConfig?.()
 
 export default function App() {
   return (

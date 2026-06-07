@@ -2,14 +2,35 @@
 // Configure once via setConfig before using.
 
 let config = {
-    baseUrl: '',
-    sessionToken: '',
-    appToken: '',
+    baseUrl: localStorage.getItem("glpi_base_url") || "",
+    sessionToken: localStorage.getItem("glpi_session_token") || "",
+    appToken: localStorage.getItem("glpi_app_token") || "",
     timeoutMs: 30000,
 }
 
 export function setConfig(nextConfig = {}) {
     config = { ...config, ...nextConfig }
+
+    if (config.baseUrl) {
+        localStorage.setItem("glpi_base_url", config.baseUrl)
+    }
+
+    if (config.sessionToken) {
+        localStorage.setItem("glpi_session_token", config.sessionToken)
+    }
+
+    if (config.appToken) {
+        localStorage.setItem("glpi_app_token", config.appToken)
+    }
+}
+
+export function loadConfig() {
+    config = {
+        ...config,
+        baseUrl: localStorage.getItem("glpi_base_url") || "",
+        sessionToken: localStorage.getItem("glpi_session_token") || "",
+        appToken: localStorage.getItem("glpi_app_token") || "",
+    }
 }
 
 function buildHeaders(extra = {}) {
