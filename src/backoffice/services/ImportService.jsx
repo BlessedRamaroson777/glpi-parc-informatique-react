@@ -15,6 +15,8 @@
 import { runFile1Import } from "./importFile1Service.jsx"
 import { runFile2Import } from "./importFile2Service.jsx"
 import { runFile3Import } from "./importFile3Service.jsx"
+import { runFile4Import } from "./importFile4Service.jsx"
+import { runResetForAll } from "../services/resetService.jsx"
 import { parseCsv }       from "../utils/importUtils.jsx"
 
 // ── Étapes exposées pour le stepper UI ─────────────────────────────────────
@@ -25,20 +27,21 @@ export const IMPORT_STEPS = [
     { key: "file1_assets",       label: "Assets (F1)"        },
     { key: "file2_tickets",      label: "Tickets (F2)"       },
     { key: "file3_costs",        label: "Coûts (F3)"         },
+    { key: "file4_images",       label: "Images (F4)"        },
 ]
 
 // ── Orchestrateur ────────────────────────────────────────────────────────────
 
 /**
- * Lance l'import complet des 3 fichiers.
+ * Lance l'import complet des 4 fichiers.
  *
- * @param {{ file1: string, file2: string, file3: string }} csvTexts
+ * @param {{ file1: string, file2: string, file3: string, file4: string }} csvTexts
  * @param {Function} pushLog        — callback(msg, type)
  * @param {Function} setCurrentStep — callback(stepKey) pour le stepper UI
  * @param {boolean}  dryRun
  */
 export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = true) {
-    const { file1, file2, file3 } = csvTexts
+    const { file1, file2, file3, file4 } = csvTexts
 
     // Registre partagé transmis entre les services
     const registry = {
@@ -94,6 +97,15 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
         await runFile3Import(file3, pushLog, dryRun, registry)
     } else {
         pushLog("⚠ Feuille 3 non fournie — coûts ignorés", "warn")
+    }
+
+    // ── Feuille 4 ────────────────────────────────────────────────────────
+    if (file4) {
+        setCurrentStep("file4_images")
+        pushLog("═══ Feuille 4 : Images ═══", "info")
+        await runFile4Import(file4, pushLog, dryRun, registry)
+    } else {
+        pushLog("⚠ Feuille 4 non fournie — images ignorées", "warn")
     }
 
     // pushLog(

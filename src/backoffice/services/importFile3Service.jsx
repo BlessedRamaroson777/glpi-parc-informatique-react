@@ -103,15 +103,15 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
 
         if (!dryRun) {
             try {
-                const res = await apiV1.createItem("TicketCost", { input: payload })
+                const url = `/api.php/v2/Assistance/Ticket/${glpiId}/Cost`
+                const res = await apiRequest(url, {
+                    method:  "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body:    JSON.stringify(payload),
+                })
                 const record = Array.isArray(res) ? res[0] : res
-                const newId  = record?.id ?? record?.data?.id ?? null
-                
-                if (newId) {
-                    pushLog(`  ↳ Coût créé id=${newId}`, "success")
-                } else {
-                    pushLog(`  ⚠ Erreur lors de la création du coût (pas d'ID retourné, réponse: ${JSON.stringify(res)})`, "error")
-                }
+                const newId  = record?.id ?? null
+                pushLog(`  ↳ Coût créé id=${newId}`, "success")
             } catch (err) {
                 pushLog(`  ⚠ Erreur: ${err.message}`, "error")
             }
