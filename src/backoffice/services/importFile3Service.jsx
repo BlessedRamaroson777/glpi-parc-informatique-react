@@ -91,7 +91,7 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
         const payload = {
             name:           `Coût intervention #${n}`,
             tickets_id:     glpiId,
-            actiontime:     duration,
+            duration:     duration,
             cost_time:      toFloat(row[F3.TIME_COST]),
             cost_fixed:     toFloat(row[F3.FIXED_COST]),
             cost_material:  0,                         // non fourni — généré à 0

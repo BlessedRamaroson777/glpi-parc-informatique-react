@@ -64,6 +64,7 @@ export default function Tickets() {
           >
             <div className="ticket-item-left">
               <span className="ticket-id">#{ticket.id}</span>
+              <span className="ticket-id">REF {ticket.external_id}</span>
               <span className="ticket-item-title">{ticket.name}</span>
               <span className="ticket-item">Derniere modification: {new Date(ticket.date_mod).toLocaleDateString("fr-FR")}</span>
               <span className="ticket-item">Date ouverture: {new Date(ticket.date_creation).toLocaleDateString("fr-FR")}</span>

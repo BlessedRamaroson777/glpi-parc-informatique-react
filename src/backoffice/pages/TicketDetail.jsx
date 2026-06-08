@@ -106,6 +106,7 @@ export default function TicketDetail() {
             <div className="info-section">
                 <p className="section-title">Informations</p>
                 <Row label="Type"         value={TYPE_LABELS[ticket.type] || ticket.type} />
+                <Row label="Reference"    value={ticket.external_id || "Inconnue"} />
                 <Row label="Priorité"     value={PRIORITY_LABELS[ticket.priority] || ticket.priority} />
                 <Row label="Urgence"      value={PRIORITY_LABELS[ticket.urgency]  || ticket.urgency} />
                 <Row label="Impact"       value={PRIORITY_LABELS[ticket.impact]   || ticket.impact} />
