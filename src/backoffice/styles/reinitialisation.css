@@ -100,6 +100,7 @@
     color: white;
     border-radius: 8px;
     padding: 12px;
+    height: 300px;
 }
 
 .log-panel__clear {
@@ -113,7 +114,7 @@
 }
 
 .log-panel__body {
-    max-height: inherit;
+    height: 100%;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
