@@ -1,36 +1,39 @@
-/**
- * importFile1Service.jsx
- * ─────────────────────
- * Importe les assets depuis la Feuille 1 (Assets : Computers + Monitor).
- *
- * Ordre d'insertion GLPI :
- *   1. Localisations
- *   2. Fabricants
- *   3. États
- *   4. Modèles (ComputerModel / MonitorModel)
- *   5. Utilisateurs
- *   6. Ordinateurs
- *   7. Moniteurs
- *   8. Infocoms (auto par GLPI, mais on crée si absent)
- */
-
 import { apiRequest, ensureV1Session } from "../../common/services/authService.jsx"
 import apiV1 from "../../common/utils/apiV1.jsx"
 import { parseCsv } from "../utils/importUtils.jsx"
+import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 
+// ── Mapping Item_Type CSV → endpoint GLPI V1 ────────────────────────────────
+
+const ITEMTYPE_TO_ENDPOINT = Object.fromEntries(
+    ASSET_TYPES.map(({ key }) => [key, key])
+)
+
+// Modèles GLPI par type d'asset
+const MODEL_ENDPOINT = {
+    Computer:           "Dropdowns/ComputerModel",
+    Monitor:            "Dropdowns/MonitorModel",
+    NetworkEquipment:   "Dropdowns/NetworkEquipmentModel",
+    Peripheral:         "Dropdowns/PeripheralModel",
+    Phone:              "Dropdowns/PhoneModel",
+    Printer:            "Dropdowns/PrinterModel",
+    // Les autres types n'ont pas de modèle dédié dans GLPI
+}
+
+const MODEL_FIELD = {
+    Computer:           "computermodels_id",
+    Monitor:            "monitormodels_id",
+    NetworkEquipment:   "networkequipmentmodels_id",
+    Peripheral:         "peripheralmodels_id",
+    Phone:              "phonemodels_id",
+    Printer:            "printermodels_id",
+}
 
 // ── Résolution/création de référentiels ────────────────────────────────────
 
-/**
- * Cherche un item par nom dans un endpoint GLPI.
- * Crée-le si inexistant.
- * Retourne l'ID GLPI.
- */
 async function resolveOrCreate(endpoint, name, extraFields = {}, pushLog, dryRun) {
     if (!name) return null
 
-    // GLPI API v2 ne supporte pas searchText — on récupère la liste complète
-    // et on filtre côté client (référentiels petits, ≤ 200 entrées en pratique)
     let found = null
     try {
         const existing = await apiRequest(
@@ -40,8 +43,7 @@ async function resolveOrCreate(endpoint, name, extraFields = {}, pushLog, dryRun
         const items = Array.isArray(existing) ? existing : (existing?.data ?? [])
         found = items.find(it => it.name?.toLowerCase() === name.toLowerCase())
     } catch (err) {
-        // Si la liste est vide, GLPI peut renvoyer 206/404 → on ignore et on crée
-        pushLog(`  ↳ Liste ${endpoint} inaccessible (${err.message}) — tentative de création`, "warn")
+        pushLog(`  ↳ Liste ${endpoint} inaccessible — tentative de création`, "warn")
     }
 
     if (found) {
@@ -49,7 +51,6 @@ async function resolveOrCreate(endpoint, name, extraFields = {}, pushLog, dryRun
         return found.id
     }
 
-    // Création
     pushLog(`  ↳ CREATE ${endpoint} « ${name} »`, "warn")
     if (dryRun) return `DRY-${name}`
 
@@ -58,25 +59,17 @@ async function resolveOrCreate(endpoint, name, extraFields = {}, pushLog, dryRun
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ name, ...extraFields }),
     })
-    // GLPI peut retourner : {id, message} ou [{id, message}] ou null
     const record = Array.isArray(created) ? created[0] : created
     const newId  = record?.id ?? record?.data?.id ?? null
     if (newId) {
         pushLog(`  ↳ Créé avec id=${newId}`, "success")
     } else {
-        pushLog(`  ↳ Créé (id non retourné par GLPI — réponse : ${JSON.stringify(created)})`, "warn")
+        pushLog(`  ↳ Créé (réponse: ${JSON.stringify(created)})`, "warn")
     }
     return newId
 }
 
-// ── Mapping des champs ──────────────────────────────────────────────────────
-
-const STATUS_MAP = {
-    "en production": 1,
-    "maintenance":   2,
-    "en stock":      3,
-    "en panne":      4,
-}
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function toSlug(name) {
     return name
@@ -89,27 +82,21 @@ function toSlug(name) {
 
 // ── Import principal ────────────────────────────────────────────────────────
 
-/**
- * Importe tous les assets de la Feuille 1.
- *
- * @param {string}   csvText  — contenu brut du CSV
- * @param {Function} pushLog  — callback(msg, type)
- * @param {boolean}  dryRun
- * @returns {object} registry — { computers: Map<name,id>, monitors: Map<name,id> }
- */
 export async function runFile1Import(csvText, pushLog, dryRun = true) {
-    await ensureV1Session()   
+    await ensureV1Session()
     const rows = parseCsv(csvText)
     pushLog(`Feuille 1 — ${rows.length} lignes détectées`, "info")
 
-    // Registres (name → GLPI id)
     const locationIds     = new Map()
     const manufacturerIds = new Map()
     const stateIds        = new Map()
-    const modelIds        = new Map()   // key = "Computer:OptiPlex 7010"
+    const modelIds        = new Map()   // "Computer:OptiPlex 7010" → id
     const userIds         = new Map()
-    const computers       = new Map()
-    const monitors        = new Map()
+
+    // Registre dynamique : une Map par type d'asset
+    // ex: assetRegistry.get("Computer") → Map<name, glpiId>
+    const assetRegistry = new Map()
+    ASSET_TYPES.forEach(({ key }) => assetRegistry.set(key, new Map()))
 
     // ── Étape 1 : Référentiels ──────────────────────────────────────────
     pushLog("── Référentiels ──", "info")
@@ -117,8 +104,6 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
     const uniqueLocations     = [...new Set(rows.map(r => r.Location).filter(Boolean))]
     const uniqueManufacturers = [...new Set(rows.map(r => r.Manufacturer).filter(Boolean))]
     const uniqueStatuses      = [...new Set(rows.map(r => r.Status).filter(Boolean))]
-    const computerModelNames  = [...new Set(rows.filter(r => r.Item_Type === "Computer").map(r => r.Model).filter(Boolean))]
-    const monitorModelNames   = [...new Set(rows.filter(r => r.Item_Type === "Monitor").map(r => r.Model).filter(Boolean))]
 
     for (const name of uniqueLocations) {
         locationIds.set(name, await resolveOrCreate("Dropdowns/Location", name, {}, pushLog, dryRun))
@@ -129,33 +114,24 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
     for (const name of uniqueStatuses) {
         stateIds.set(name, await resolveOrCreate("Dropdowns/State", name, { is_visible: 1 }, pushLog, dryRun))
     }
-    for (const name of computerModelNames) {
-        modelIds.set(`Computer:${name}`, await resolveOrCreate("Dropdowns/ComputerModel", name, {}, pushLog, dryRun))
-    }
-    for (const name of monitorModelNames) {
-        modelIds.set(`Monitor:${name}`, await resolveOrCreate("Dropdowns/MonitorModel", name, {}, pushLog, dryRun))
+
+    // Modèles — uniquement pour les types qui en ont
+    for (const [itemtype, modelEndpoint] of Object.entries(MODEL_ENDPOINT)) {
+        const names = [...new Set(
+            rows.filter(r => r.Item_Type === itemtype).map(r => r.Model).filter(Boolean)
+        )]
+        for (const name of names) {
+            modelIds.set(
+                `${itemtype}:${name}`,
+                await resolveOrCreate(modelEndpoint, name, {}, pushLog, dryRun)
+            )
+        }
     }
 
     // ── Étape 2 : Utilisateurs ──────────────────────────────────────────
     pushLog("── Utilisateurs ──", "info")
 
     const uniqueUsers = [...new Set(rows.map(r => r.User).filter(Boolean))]
-    // utilise v2
-
-    // for (const fullName of uniqueUsers) {
-    //     const parts    = fullName.trim().split(" ")
-    //     const realname = parts.slice(1).join(" ") || fullName
-    //     const name     = toSlug(fullName)          // login: prénom.nom
-    //     const fields   = {
-    //         name,
-    //         realname,
-    //         firstname: parts[0],
-    //         password:  `ITU@${new Date().getFullYear()}!`,
-    //         email:     `${name}@itu.mg`,
-    //         is_active: 1,
-    //     }
-    //     userIds.set(fullName, await resolveOrCreate("Administration/User", name, fields, pushLog, dryRun))
-    // }
 
     for (const fullName of uniqueUsers) {
         const parts    = fullName.trim().split(" ")
@@ -166,7 +142,6 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
             realname,
             firstname: parts[0],
             password:  name,
-            // password:  `ITU@${new Date().getFullYear()}!`,
             is_active: 1,
         }
 
@@ -201,33 +176,45 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
     const today = new Date().toISOString().slice(0, 10)
 
     for (const row of rows) {
-        const isComputer = row.Item_Type === "Computer"
-        const isMonitor  = row.Item_Type === "Monitor"
-        if (!isComputer && !isMonitor) continue
+        // const itemtype = row.Item_Type
+        // if (!itemtype || !ITEMTYPE_TO_ENDPOINT[itemtype]) {
+        //     pushLog(`  ⚠ Type inconnu « ${itemtype} » — ligne ignorée`, "warn")
+        //     continue
+        // }
+        const itemtype = row.Item_Type
+        // const endpoint = ITEMTYPE_TO_ENDPOINT[itemtype]
+        const endpoint =
+            itemtype === "Socket"
+                ? "Glpi\\Socket"
+                : itemtype
 
-        const itemtype = isComputer ? "Computer" : "Monitor"
-        const modelKey = `${row.Item_Type}:${row.Model}`
+        if (!itemtype || !endpoint) {
+            pushLog(`⚠ Type inconnu « ${itemtype} » — ligne ignorée`, "warn")
+            continue
+        }
+        const modelKey   = `${itemtype}:${row.Model}`
+        const modelField = MODEL_FIELD[itemtype]
 
         const payload = {
             name:             row.Name,
             otherserial:      row.Inventory_Number,
-            serial:           `${row.Inventory_Number}`,   // généré
-            locations_id:     locationIds.get(row.Location)     ?? 0,
+            serial:           row.Inventory_Number ?? "",
+            locations_id:     locationIds.get(row.Location)       ?? 0,
             manufacturers_id: manufacturerIds.get(row.Manufacturer) ?? 0,
-            states_id:        stateIds.get(row.Status)          ?? 0,
-            users_id:         userIds.get(row.User)             ?? 0,
-            // users_id_tech:    userIds.get(row.User)             ?? 0,  // même utilisateur = technicien
+            states_id:        stateIds.get(row.Status)             ?? 0,
+            users_id:         userIds.get(row.User)                ?? 0,
             comment:          `Importé automatiquement le ${today}`,
             is_global:        0,
             date_mod:         `${today} 00:00:00`,
-            ...(isComputer
-                ? { computermodels_id: modelIds.get(modelKey) ?? 0 }
-                : { monitormodels_id:  modelIds.get(modelKey) ?? 0 }
+            ...(modelField && modelIds.has(modelKey)
+                ? { [modelField]: modelIds.get(modelKey) }
+                : {}
             ),
         }
 
+        // Nettoie les valeurs nulles/zéro
         Object.keys(payload).forEach(k => {
-            if (payload[k] === 0 || payload[k] === null || payload[k] === undefined) {
+            if (payload[k] === 0 || payload[k] === null || payload[k] === undefined || payload[k] === "") {
                 delete payload[k]
             }
         })
@@ -236,24 +223,64 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
 
         if (!dryRun) {
             try {
-                const res = await apiV1.createItem(itemtype, { input: payload })
+                let res
+                // const res   = await apiV1.createItem(itemtype, { input: payload })
+                if (itemtype === "Socket") {
+                    res = await apiRequest(
+                        "/api.php/v2/Assets/Socket",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(payload)
+                        }
+                    )
+
+                    console.log(res)
+                }
+                else {
+                    res = await apiV1.createItem(itemtype, {
+                        input: payload
+                    })
+                }
+                // const res = await apiV1.createItem(endpoint, {
+                //     input: payload
+                // })
                 const newId = Array.isArray(res) ? res[0]?.id : res?.id
                 if (newId) {
                     pushLog(`  ↳ id=${newId}`, "success")
-                    if (isComputer) computers.set(row.Name, newId)
-                    else            monitors.set(row.Name, newId)
+                    assetRegistry.get(itemtype)?.set(row.Name, newId)
                 } else {
-                    pushLog(`  ⚠ Erreur lors de la création de l'équipement (pas d'ID retourné)`, "error")
+                    pushLog(`  ⚠ Pas d'ID retourné pour « ${row.Name} »`, "error")
+                    throw new Error(`Pas d'ID retourné pour « ${row.Name} »`)
                 }
             } catch (err) {
                 pushLog(`  ⚠ Erreur: ${err.message}`, "error")
+                throw new Error(`  ⚠ Erreur: ${err.message}`, "error")
+
             }
         } else {
-            if (isComputer) computers.set(row.Name, `DRY-${row.Name}`)
-            else            monitors.set(row.Name, `DRY-${row.Name}`)
+            assetRegistry.get(itemtype)?.set(row.Name, `DRY-${row.Name}`)
         }
     }
 
-    pushLog(`Feuille 1 terminée ✓ (${computers.size} PC, ${monitors.size} moniteurs)`, "success")
-    return { computers, monitors, userIds, locationIds, manufacturerIds, stateIds }
+    // Résumé
+    const counts = ASSET_TYPES
+        .map(({ key, label }) => ({ label, count: assetRegistry.get(key)?.size ?? 0 }))
+        .filter(({ count }) => count > 0)
+        .map(({ label, count }) => `${count} ${label}`)
+        .join(", ")
+    pushLog(`Feuille 1 terminée ✓ (${counts || "0 assets"})`, "success")
+
+    // Retourne le registre complet + rétrocompatibilité computers/monitors
+    return {
+        assetRegistry,
+        computers:    assetRegistry.get("Computer")  ?? new Map(),
+        monitors:     assetRegistry.get("Monitor")   ?? new Map(),
+        userIds,
+        locationIds,
+        manufacturerIds,
+        stateIds,
+    }
 }
