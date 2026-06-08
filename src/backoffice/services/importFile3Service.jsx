@@ -114,6 +114,7 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
                 pushLog(`  ↳ Coût créé id=${newId}`, "success")
             } catch (err) {
                 pushLog(`  ⚠ Erreur: ${err.message}`, "error")
+                throw new Error(`  ⚠ Erreur: ${err.message}`, "error")
             }
         }
 
