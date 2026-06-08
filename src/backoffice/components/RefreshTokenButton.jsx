@@ -22,6 +22,7 @@ function formatRemaining(ms) {
 
 export default function RefreshTokenButton() {
   const [status, setStatus] = useState("");
+  const [showCounter, setShowCounter] = useState(false);
   const [expiresAt, setExpiresAt] = useState(getExpiresAtMs());
   const [now, setNow] = useState(Date.now());
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -75,6 +76,10 @@ export default function RefreshTokenButton() {
     }
   }
 
+  function handleShowCounter() {
+    setShowCounter(!showCounter);
+  }
+
   const remainingMs = expiresAt ? Math.max(0, expiresAt - now) : 0;
 
   useEffect(() => {
@@ -93,6 +98,7 @@ export default function RefreshTokenButton() {
   const expiresLabel = expiresAt
     ? `Expire a ${formatClock(expiresAt)} (dans ${formatRemaining(remainingMs)})`
     : "Expiration inconnue";
+  // console.log(expiresLabel);
 
   const refreshLabel = isRefreshing ? "Refresh..." : "Refresh token";
 
@@ -110,10 +116,17 @@ export default function RefreshTokenButton() {
 
   return (
     <div style={{ display: "grid", gap: 4 }}>
-      <button type="button" className="refresh-token-button" onClick={() => handleRefresh(false)} disabled={isRefreshing}>
-        {refreshLabel}
-      </button>
-      <small style={{ color: metaColor, fontWeight: 600 }}>{statusText}</small>
+      <div>
+        <button type="button" className="refresh-token-button" onClick={() => handleRefresh(false)} disabled={isRefreshing}>
+          {refreshLabel}
+        </button>
+        <a onClick={handleShowCounter}>
+          x
+        </a>
+      </div>
+      {showCounter && (
+        <small style={{ color: metaColor, fontWeight: 600 }}>{statusText}</small>
+      )}
     </div>
   );
 }
