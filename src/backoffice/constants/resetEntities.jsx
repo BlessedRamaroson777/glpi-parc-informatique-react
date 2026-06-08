@@ -85,6 +85,38 @@ export const RESET_CONFIG = {
         description: "Toutes les imprimantes.",
     },
 
+    networkequipment_models: {
+        group: "Référentiels",
+        label: "Modèles équipements réseau",
+        endpoint: "Dropdowns/NetworkEquipmentModel",
+        order: 33,
+        dependencies: [],
+    },
+
+    peripheral_models: {
+        group: "Référentiels",
+        label: "Modèles périphériques",
+        endpoint: "Dropdowns/PeripheralModel",
+        order: 34,
+        dependencies: [],
+    },
+
+    phone_models: {
+        group: "Référentiels",
+        label: "Modèles téléphones",
+        endpoint: "Dropdowns/PhoneModel",
+        order: 35,
+        dependencies: [],
+    },
+
+    printer_models: {
+        group: "Référentiels",
+        label: "Modèles imprimantes",
+        endpoint: "Dropdowns/PrinterModel",
+        order: 36,
+        dependencies: [],
+    },
+
     softwares: {
         group: "Assets",
         label: "Logiciels",
