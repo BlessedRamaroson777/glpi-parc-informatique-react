@@ -1,25 +1,9 @@
-/**
- * importService.jsx
- * ─────────────────
- * Orchestrateur central de l'import GLPI depuis les 3 CSV.
- *
- * Séquence :
- *   1. Feuille 1 → référentiels + users + assets         → registry.computers/monitors
- *   2. Feuille 2 → tickets + liaisons assets              → registry.ticketIds/ticketDates
- *   3. Feuille 3 → coûts de tickets                       (utilise registry.ticketIds)
- *
- * Un registre partagé est transmis entre les services pour résoudre les IDs
- * cross-fichiers (ex : nom d'asset CSV → ID GLPI pour les tickets).
- */
-
 import { runFile1Import } from "./importFile1Service.jsx"
 import { runFile2Import } from "./importFile2Service.jsx"
 import { runFile3Import } from "./importFile3Service.jsx"
 import { runFile4Import } from "./importFile4Service.jsx"
 import { runResetForAll } from "../services/resetService.jsx"
 import { parseCsv }       from "../utils/importUtils.jsx"
-
-// ── Étapes exposées pour le stepper UI ─────────────────────────────────────
 
 export const IMPORT_STEPS = [
     { key: "file1_referentiels", label: "Référentiels (F1)"  },
@@ -30,26 +14,16 @@ export const IMPORT_STEPS = [
     { key: "file4_images",       label: "Images (F4)"        },
 ]
 
-// ── Orchestrateur ────────────────────────────────────────────────────────────
-
-/**
- * Lance l'import complet des 4 fichiers.
- *
- * @param {{ file1: string, file2: string, file3: string, file4: string }} csvTexts
- * @param {Function} pushLog        — callback(msg, type)
- * @param {Function} setCurrentStep — callback(stepKey) pour le stepper UI
- * @param {boolean}  dryRun
- */
 export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = true) {
     const { file1, file2, file3, file4 } = csvTexts
 
     const registry = {
-        computers:   new Map(),
-        monitors:    new Map(),
+        computers:     new Map(),
+        monitors:      new Map(),
         assetRegistry: new Map(),
-        userIds:     new Map(),
-        ticketIds:   new Map(),
-        ticketDates: new Map(),
+        userIds:       new Map(),
+        ticketIds:     new Map(),
+        ticketDates:   new Map(),
     }
 
     if (dryRun) pushLog("Mode DRY-RUN — aucun appel POST réel", "info")
@@ -61,16 +35,9 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
             pushLog("═══ Feuille 1 : Assets ═══", "info")
             const f1Result = await runFile1Import(file1, pushLog, dryRun)
             f1Result.assetRegistry.forEach((map, type) => {
-                map.forEach((id, name) => {
-                    if (!registry.assetRegistry.has(type)) {
-                        registry.assetRegistry.set(type, new Map())
-                    }
-
-                    registry.assetRegistry.get(type).set(name, id)
-                })
+                if (!registry.assetRegistry.has(type)) registry.assetRegistry.set(type, new Map())
+                map.forEach((id, name) => registry.assetRegistry.get(type).set(name, id))
             })
-
-            // rétrocompatibilité
             f1Result.computers.forEach((id, name) => registry.computers.set(name, id))
             f1Result.monitors.forEach((id, name)  => registry.monitors.set(name, id))
             f1Result.userIds.forEach((id, name)   => registry.userIds.set(name, id))
@@ -83,14 +50,27 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
         if (file2) {
             setCurrentStep("file2_tickets")
             pushLog("═══ Feuille 2 : Tickets ═══", "info")
+
+            // Pré-remplir ticketDates depuis le CSV (comme avant)
             const f2Rows = parseCsv(file2)
             f2Rows.forEach(row => {
                 const [d, m, y] = row.Date.split("/")
                 const dt = `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")} ${row.Heure}:00`
                 registry.ticketDates.set(row.Ref_Ticket, dt)
             })
-            const ticketIds = await runFile2Import(file2, pushLog, dryRun, registry)
-            ticketIds.forEach((id, ref) => registry.ticketIds.set(ref, id))
+
+            // F2 retourne maintenant { ticketIds, ticketDates }
+            const f2Result = await runFile2Import(file2, pushLog, dryRun, registry)
+
+            // Compatibilité : F2 peut retourner une Map (ancien) ou { ticketIds, ticketDates } (nouveau)
+            const returnedMap = f2Result instanceof Map ? f2Result : f2Result?.ticketIds
+            if (returnedMap instanceof Map) {
+                returnedMap.forEach((id, ref) => registry.ticketIds.set(ref, id))
+            }
+            // Récupère aussi les ticketDates si F2 les retourne
+            if (f2Result?.ticketDates instanceof Map) {
+                f2Result.ticketDates.forEach((dt, ref) => registry.ticketDates.set(ref, dt))
+            }
         } else {
             pushLog("⚠ Feuille 2 non fournie — tickets ignorés", "warn")
         }
@@ -128,7 +108,7 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
             }
         }
 
-        throw err  // ← re-throw pour que useImport marque l'étape en erreur
+        throw err
     }
 
     return registry
