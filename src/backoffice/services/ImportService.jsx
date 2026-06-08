@@ -121,7 +121,7 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
         if (!dryRun) {
             pushLog("⏳ Rollback en cours — réinitialisation des données importées…", "warn")
             try {
-                await runResetForAll(pushLog)
+                await runResetForAll(pushLog, false)
                 pushLog("✓ Rollback terminé", "success")
             } catch (resetErr) {
                 pushLog(`⚠ Erreur pendant le rollback : ${resetErr.message}`, "error")
