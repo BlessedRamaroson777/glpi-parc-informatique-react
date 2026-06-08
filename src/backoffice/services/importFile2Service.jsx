@@ -70,10 +70,28 @@ function parseItems(rawItems) {
  * Résout le type d'item GLPI (Computer → 1, Monitor → 5)
  * à partir du nom d'asset et des registres.
  */
-function resolveItemType(name, computers, monitors) {
-    if (computers.has(name)) return { itemtype: "Computer", items_id: computers.get(name) }
-    if (monitors.has(name))  return { itemtype: "Monitor",  items_id: monitors.get(name) }
+// function resolveItemType(name, computers, monitors) {
+//     if (computers.has(name)) return { itemtype: "Computer", items_id: computers.get(name) }
+//     if (monitors.has(name))  return { itemtype: "Monitor",  items_id: monitors.get(name) }
+//     return null
+// }
+function resolveItemType(name, assetRegistry) {
+    for (const [itemtype, map] of assetRegistry) {
+        if (map.has(name)) return { itemtype, items_id: map.get(name) }
+    }
     return null
+}
+
+function normalizeItemtypeForTicketLink(itemtype) {
+    const value = String(itemtype ?? "").trim()
+    if (!value) return value
+    if (value.includes("\\")) return value
+
+    const aliases = {
+        Socket: "Glpi\\Socket",
+    }
+
+    return aliases[value] ?? value
 }
 
 // ── Import principal ─────────────────────────────────────────────────────────
@@ -92,7 +110,8 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
     const rows = parseCsv(csvText)
     pushLog(`Feuille 2 — ${rows.length} tickets détectés`, "info")
 
-    const { computers = new Map(), monitors = new Map() } = registry
+    // const { computers = new Map(), monitors = new Map() } = registry
+    const { assetRegistry = new Map() } = registry
     const ticketIds = new Map()   // ref_ticket → GLPI id
 
     for (const row of rows) {
@@ -132,10 +151,11 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
                     pushLog(`  ↳ Ticket créé id=${glpiId}`, "success")
                 } else {
                     pushLog(`  ⚠ Erreur lors de la création du ticket (pas d'ID retourné)`, "error")
+                    throw new Error(`  ⚠ Erreur lors de la création du ticket (pas d'ID retourné)`)
                 }
             } catch (err) {
                 pushLog(`  ⚠ Erreur lors de la création du ticket: ${err.message}`, "error")
-                console.error("Erreur de création de ticket:", err)
+                throw new Error(`  ⚠ Erreur lors de la création du ticket: ${err.message}`, "error")
             }
         }
 
@@ -145,23 +165,40 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
         const itemNames = parseItems(row[F2.ITEMS])
 
         for (const assetName of itemNames) {
-            const resolved = resolveItemType(assetName, computers, monitors)
+            const resolved = resolveItemType(assetName, assetRegistry)
             if (!resolved) {
                 pushLog(`  ⚠ Asset « ${assetName} » non trouvé dans le registre`, "warn")
                 continue
             }
 
-            pushLog(`  LINK Ticket ${glpiId} ← ${assetName} (${resolved.itemtype})`, "warn")
+            const linkPayload = {
+                tickets_id: Number(glpiId),
+                itemtype: normalizeItemtypeForTicketLink(resolved.itemtype),
+                items_id: Number(resolved.items_id),
+            }
+
+            if (!Number.isFinite(linkPayload.tickets_id) || !Number.isFinite(linkPayload.items_id) || !linkPayload.itemtype) {
+                pushLog(
+                    `  ⚠ Liaison ignorée pour « ${assetName} » (payload invalide: ${JSON.stringify(linkPayload)})`,
+                    "warn"
+                )
+                continue
+            }
+
+            pushLog(`  LINK Ticket ${glpiId} ← ${assetName} (${linkPayload.itemtype})`, "warn")
 
             if (!dryRun) {
-                await apiV1.createItem("Item_Ticket", {
-                    input: {
-                        tickets_id: glpiId,
-                        itemtype:   resolved.itemtype,
-                        items_id:   resolved.items_id,
-                    }
-                })
-                pushLog(`  ↳ Lié`, "success")
+                console.log("LINK PAYLOAD", linkPayload)
+                try {
+                    await apiV1.createItem("Item_Ticket", { input: linkPayload })
+                    pushLog(`  ↳ Lié`, "success")
+                } catch (err) {
+                    pushLog(
+                        `  ⚠ Erreur liaison Item_Ticket (${JSON.stringify(linkPayload)}): ${err.message}`,
+                        "error"
+                    )
+                    throw err
+                }
             }
         }
     }
