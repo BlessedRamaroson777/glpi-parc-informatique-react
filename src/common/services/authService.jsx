@@ -4,10 +4,26 @@ import apiV1 from "../utils/apiV1.jsx"
 const TOKEN_KEY = "glpi_access_token";
 const REFRESH_KEY = "glpi_refresh_token";
 const EXPIRES_AT_KEY = "glpi_access_expires_at";
+const TOKEN_UPDATE_EVENT = "glpi-auth-updated";
+const REFRESH_BUFFER_MS = 30000;
 
 const CLIENT_ID = import.meta.env.VITE_GLPI_CLIENT_ID || "";
 const CLIENT_SECRET = import.meta.env.VITE_GLPI_CLIENT_SECRET || "";
 const OAUTH_TOKEN_PATH = "/api.php/token";
+
+let refreshInFlight = null;
+
+function emitAuthUpdate() {
+  window.dispatchEvent(new CustomEvent(TOKEN_UPDATE_EVENT));
+}
+
+function normalizeTokenPayload(data = {}) {
+  return {
+    accessToken: data.access_token || data.accessToken || data.session_token,
+    refreshToken: data.refresh_token || data.refreshToken,
+    expiresInSeconds: data.expires_in || data.expiresIn || 3600,
+  };
+}
 
 
 export function saveTokens({ accessToken, refreshToken, expiresInSeconds }) {
@@ -23,12 +39,15 @@ export function saveTokens({ accessToken, refreshToken, expiresInSeconds }) {
     const expiresAt = Date.now() + expiresInSeconds * 1000;
     localStorage.setItem(EXPIRES_AT_KEY, String(expiresAt));
   }
+
+  emitAuthUpdate();
 }
 
 export function clearTokens() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(EXPIRES_AT_KEY);
+  emitAuthUpdate();
 }
 
 export function getAccessToken() {
@@ -43,13 +62,27 @@ export function getExpiresAt() {
   return localStorage.getItem(EXPIRES_AT_KEY);
 }
 
+export function getExpiresAtMs() {
+  return Number(getExpiresAt()) || 0;
+}
+
+export function getTokenRemainingMs() {
+  const expiresAt = getExpiresAtMs();
+  if (!expiresAt) return 0;
+  return Math.max(0, expiresAt - Date.now());
+}
+
 export function isTokenExpired() {
-  const expiresAt = Number(getExpiresAt());
+  const expiresAt = getExpiresAtMs();
   if (!expiresAt) {
     return true;
   }
 
-  return Date.now() >= expiresAt - 30000;
+  return Date.now() >= expiresAt - REFRESH_BUFFER_MS;
+}
+
+export function getAuthUpdateEventName() {
+  return TOKEN_UPDATE_EVENT;
 }
 
 function buildUrl(path) {
@@ -115,7 +148,9 @@ export async function login({ username, password }) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const result = parseResponse(response);
+  const result = await parseResponse(response);
+
+  saveTokens(normalizeTokenPayload(result));
 
   // après avoir récupéré le token V2, ajouter :
   apiV1.setConfig({
@@ -150,16 +185,34 @@ export async function refreshAccessToken() {
   return parseResponse(response);
 }
 
+export async function refreshAuthSession({ ensureV1 = true } = {}) {
+  if (refreshInFlight) {
+    return refreshInFlight;
+  }
+
+  refreshInFlight = (async () => {
+    const refreshed = await refreshAccessToken();
+    saveTokens(normalizeTokenPayload(refreshed));
+
+    if (ensureV1) {
+      await ensureV1Session();
+    }
+
+    return refreshed;
+  })();
+
+  try {
+    return await refreshInFlight;
+  } finally {
+    refreshInFlight = null;
+  }
+}
+
 export async function apiRequest(path, options = {}) {
   let accessToken = getAccessToken();
 
   if (!accessToken || isTokenExpired()) {
-    const refreshed = await refreshAccessToken();
-    saveTokens({
-      accessToken: refreshed.access_token || refreshed.accessToken,
-      refreshToken: refreshed.refresh_token || refreshed.refreshToken,
-      expiresInSeconds: refreshed.expires_in || refreshed.expiresIn,
-    });
+    await refreshAuthSession();
     accessToken = getAccessToken();
   }
 
@@ -172,12 +225,7 @@ export async function apiRequest(path, options = {}) {
   });
 
   if (response.status === 401) {
-    const refreshed = await refreshAccessToken();
-    saveTokens({
-      accessToken: refreshed.access_token || refreshed.accessToken,
-      refreshToken: refreshed.refresh_token || refreshed.refreshToken,
-      expiresInSeconds: refreshed.expires_in || refreshed.expiresIn,
-    });
+    await refreshAuthSession();
 
     const retry = await fetch(buildUrl(path), {
       ...options,
