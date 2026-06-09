@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { getTickets, searchTickets } from "../../common/services/ticketService.jsx";
+import apiV2 from "../../common/utils/apiV2.jsx"
+import { getTickets, searchTickets, updateTicketStatus, getTicketById } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
 import { TICKET_STATUS } from "../../common/constants/TicketConstants.jsx";
 import TicketDetail from "./TicketDetail.jsx";
@@ -17,8 +18,11 @@ export default function StatutTicket() {
   const [tickets, setTickets] = React.useState([]);
   const [showDetail, setShowDetail] = React.useState(false);
   const [showCreate, setShowCreate] = React.useState(false);
+  const [showCommunicate, setShowCommunicate] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [selectedTicket, setSelectedTicket] = React.useState();
+  const [idDragged, setIdDragged] = React.useState();
+  const [status, setStatus] = React.useState();
   
   const navigate = useNavigate();
 
@@ -62,7 +66,8 @@ export default function StatutTicket() {
     setShowDetail(prev => !prev)
   }
 
-  async function handleShowCreate(){
+  async function handleShowCreate(statusId){
+    setStatus(statusId);
     setShowCreate(prev => !prev)
   }
 
@@ -77,13 +82,29 @@ export default function StatutTicket() {
   };
 
   // Événement déclenché lors du dépôt de la carte dans une colonne
-  const onDrop = (e, newStatus) => {
+  const onDrop = async (e, newStatus) => {
     const id = parseInt(e.dataTransfer.getData("text/plain"), 10);
-    const updatedtickets = tickets.map(ticket => 
-      ticket.id === id ? { ...ticket, status: newStatus } : ticket
-    );
-    setTickets(updatedtickets);
+
+    // const updatedtickets = tickets.map(ticket => 
+    //   ticket.id === id ? { ...ticket, status: newStatus } : ticket
+    // );
+    // setTickets(updatedtickets);
+    const ticketChanger = await getTicketById(id)
+    // const update = await updateTicketStatus(ticketChanger, newStatus)
+    const payload = {
+      ...ticketChanger,
+      status: newStatus
+    }
+    const res = await apiV2.patch(`/api.php/v2/Assistance/Ticket/${id}`, payload)
+    console.log(res)
+    loadTickets()
+    // setIdDragged(id);
+    // setStatus(newStatus);
+    // setShowCommunicate(prev => !prev)
   };
+
+  // async function handleCommuniquer(){
+  // }
 
   const renderColumn = (status, label, length) => {
     return (
@@ -118,7 +139,7 @@ export default function StatutTicket() {
             ))}
           </ul>
           <br />
-          <button onClick={handleShowCreate}>Ajouter un ticket</button>
+          <button onClick={() => handleShowCreate(status)}>Ajouter un ticket</button>
       </div>
     );
   };
@@ -137,8 +158,8 @@ export default function StatutTicket() {
     {showCreate && 
       <div className="overlay-popup active" id="monPopup">
         <div className="contenu-popup">
-            <button className="btn-fermer" onClick={() => setShowCreate()}>X</button>
-            <CreateTicket />
+            <button className="btn-fermer" onClick={() => setShowCreate(false)}>X</button>
+            <CreateTicket statusTicket={status}/>
         </div>
       </div>
     }

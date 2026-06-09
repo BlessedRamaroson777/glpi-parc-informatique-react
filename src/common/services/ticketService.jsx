@@ -28,6 +28,13 @@ export function updateTicket(ticket) {
     return apiV2.patch(`${BASE}/${ticket.id}`, ticket.toPayload())
 }
 
+export function updateTicketStatus(ticket, status) {
+    return apiV2.patch(`${BASE}/${ticket.id}`, {
+        ...ticket,
+        status: status
+    })
+}
+
 // SEARCH impossible avec v2, on utilise donc v1 pour cette fonctionnalité spécifique (exemple de compatibilité ascendante)
 export async function searchTickets(name) {
     const res = await apiV1.search("Ticket", {
