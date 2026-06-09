@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getTickets, searchTickets } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
 import { TICKET_STATUS } from "../../common/constants/TicketConstants.jsx";
-import "../styles/tickets.css"; // Importation du même fichier CSS
+import "../../common/styles/tickets.css"; // Importation du même fichier CSS
 
 const STATUS_LABELS = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
 

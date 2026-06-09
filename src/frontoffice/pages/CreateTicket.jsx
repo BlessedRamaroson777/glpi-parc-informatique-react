@@ -9,6 +9,7 @@ import {
 } from "../services/ticketsService.jsx";
 import { getAllAssets } from "../services/assetsService.jsx";
 import "../styles/create-ticket.css";
+import apiV1 from "../../common/utils/apiV1.jsx";
 
 export default function CreateTicket() {
     const [formData, setFormData] = useState({

@@ -6,7 +6,7 @@ import { TICKET_STATUS, TICKET_PRIORITIES, TICKET_TYPES } from "../../common/con
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx";
 import { ItemImages } from "../../common/components/AssetImages.jsx";
 import apiV1 from "../../common/utils/apiV1.jsx";
-import "../styles/tickets.css";
+import "../../common/styles/tickets.css";
 import apiV2 from "../../common/utils/apiV2.jsx";
 
 const STATUS_LABELS   = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
