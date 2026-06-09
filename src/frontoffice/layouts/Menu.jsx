@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-// import LogoutButton from "../components/LogoutButton.jsx";
-// import RefreshTokenButton from "../components/RefreshTokenButton.jsx";
+import LogoutButton from "../../common/components/LogoutButton.jsx";
+import RefreshTokenButton from "../../common/components/RefreshTokenButton.jsx";
 
 export default function Menu() {
   return (
@@ -11,12 +11,13 @@ export default function Menu() {
         </h1>
         <Link to="/customer/assets">Assets</Link>
         <Link to="/customer/create-ticket">Créer un Ticket</Link>
+        <Link to="/customer/statut-ticket">Statut des Tickets</Link>
       </div>
 
-      {/* <div className="menu-actions">
+      <div className="menu-actions">
         <RefreshTokenButton />
         <LogoutButton />
-      </div> */}
+      </div>
     </nav>
   );
 }

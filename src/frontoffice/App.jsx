@@ -3,6 +3,8 @@ import MainLayout from "./layouts/MainLayout.jsx";
 import Home from "./pages/Home.jsx";
 import Assets from "./pages/Assets.jsx";
 import CreateTicket from "./pages/CreateTicket.jsx";
+import StatutTicket from "./pages/StatutTicket.jsx";
+import TicketDetail from "./pages/TicketDetail.jsx";
 
 export default function App() {
   return (
@@ -24,6 +26,19 @@ export default function App() {
           path="create-ticket"
           element={
             <CreateTicket />
+          }
+        />
+        <Route
+          path="statut-ticket"
+          element={
+            <StatutTicket />
+          }
+        />
+        
+        <Route
+          path="tickets/:id"
+          element={
+            <TicketDetail />
           }
         />
       </Routes>
