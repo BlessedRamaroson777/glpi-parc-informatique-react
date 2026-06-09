@@ -112,6 +112,8 @@ export default function StatutTicket() {
                 </li>
             ))}
           </ul>
+          <br />
+          <button>Ajouter un ticket</button>
       </div>
     );
   };
@@ -130,7 +132,7 @@ export default function StatutTicket() {
     <div className="tickets-list-statut">
       {TICKET_STATUS.map(statusValue => {
           const filtered = tickets.filter(t => Number(t.status) === Number(statusValue.value))
-          if (filtered.length === 0) return null
+          // if (filtered.length === 0) return null
           return (
             renderColumn(statusValue.value,statusValue.label,filtered.length)
           )
@@ -138,50 +140,4 @@ export default function StatutTicket() {
     </div>
     </section>
   );
-
-  // return (
-  //   <section className="tickets-list-container">
-  //     <h1 className="list-title">Tickets repartis par statut</h1>
-      // {showDetail && 
-      //   <div className="overlay-popup active" id="monPopup">
-      //     <div className="contenu-popup">
-      //         <button className="btn-fermer" onClick={() => setShowDetail(false)}>X</button>
-      //         <TicketDetail ticket={selectedTicket} />
-      //     </div>
-      //   </div>
-      // }
-      // <div style={{ display: "flex" }}>
-  //       {TICKET_STATUS.map(statusValue => {
-  //         const filtered = tickets.filter(t => Number(t.status) === Number(statusValue.value))
-  //         if (filtered.length === 0) return null
-  //         return (
-  //           <div key={statusValue.value} className="status-group">
-  //             <h2 className="status-group-title">
-  //               <Badge status={statusValue.value} /> ({filtered.length})
-  //             </h2>
-  //             <ul className="tickets-list">
-  //               {filtered.map(ticket => (
-  //                 <li
-  //                   key={ticket.id}
-  //                   onClick={() => handleShowDetail(ticket)}
-  //                   className="ticket-list-item"
-  //                 >
-  //                   <div className="ticket-item-left">
-  //                     <span className="ticket-id">#{ticket.id}</span>
-  //                     <span className="ticket-item-title">{ticket.name}</span>
-  //                   </div>
-  //                   <div className="ticket-item-right">
-  //                     <Badge status={ticket.status} />
-  //                     <span className="ticket-item-date">{new Date(ticket.date_creation).toLocaleDateString("fr-FR")}</span>
-  //                   </div>
-  //                 </li>
-  //               ))}
-  //             </ul>
-  //           </div>
-  //         )
-  //       })}
-  //     </div>
-  //   </section>
-      
-  // );
 }

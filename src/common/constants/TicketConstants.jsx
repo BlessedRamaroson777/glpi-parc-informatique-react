@@ -10,10 +10,10 @@ export const TICKET_STATUS = [
     { value: 1, label: "Nouveau" },
     { value: 2, label: "En cours Attribué" },
     // { value: 3, label: "En cours Planifié" },
-    { value: 4, label: "En attente" },
+    // { value: 4, label: "En attente" },
     { value: 5, label: "Resolu" },
     // { value: 6, label: "Clos" },
-    { value: 10, label: "Validation" },
+    // { value: 10, label: "Validation" },
 ];
 
 export const TICKET_STATUS_IMPORT = [
