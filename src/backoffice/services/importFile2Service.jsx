@@ -4,10 +4,12 @@ import { apiRequest } from "../../common/services/authService.jsx"
 import { parseCsv } from "../utils/importUtils.jsx"
 import { F2 } from "../constants/importConstants.jsx"
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
+import { TICKET_STATUS_IMPORT, TICKET_TYPES_IMPORT, TICKET_PRIORITIES_EN } from "../../common/constants/TicketConstants.jsx"
+import { arrayToMap } from "../utils/formatters.jsx"
 
-const TYPE_MAP     = { "incident": 1, "request": 2, "demande": 2 }
-const STATUS_MAP   = { "new": 1, "processing": 2, "pending": 4, "solved": 5, "closed": 6 }
-const PRIORITY_MAP = { "very low": 1, "low": 2, "medium": 3, "high": 4, "very high": 5, "major": 6 }
+const STATUS_MAP = arrayToMap(TICKET_STATUS_IMPORT)
+const TYPE_MAP = arrayToMap(TICKET_TYPES_IMPORT)
+const PRIORITY_MAP = arrayToMap(TICKET_PRIORITIES_EN)
 
 function combineDateTime(dateFr, heure) {
     const [d, m, y] = dateFr.split("/")
@@ -69,16 +71,16 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
 
     for (const row of rows) {
         const ref      = row[F2.REF]
-        const datetime = combineDateTime(row.Date, row.Heure)
-        const priority = PRIORITY_MAP[(row.Priority || "medium").toLowerCase()] ?? 3
+        const datetime = combineDateTime(row[F2.DATE], row[F2.HEURE])
+        const priority = PRIORITY_MAP[(row[F2.PRIORITY] || "medium").toLowerCase()]
 
         // Payload V2 — noms de champs selon le schéma GLPI v2
         const payload = {
             name:               row[F2.TITRE],
             content:            row[F2.DESCRIPTION] || `${row[F2.TITRE]} — importé automatiquement`,
             external_id:        ref,
-            type:               TYPE_MAP[(row.Type   || "incident").toLowerCase()] ?? 1,
-            status:             STATUS_MAP[(row.Status || "new").toLowerCase()]    ?? 1,
+            type:               TYPE_MAP[(row[F2.TYPE]).toLowerCase()],
+            status:             STATUS_MAP[(row[F2.STATUS]).toLowerCase()]   ,
             priority,
             urgency:            priority,
             impact:             priority,
@@ -88,7 +90,7 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
             date_creation:      datetime,
         }
 
-        pushLog(`CREATE Ticket « ${row[F2.TITRE]} » (${datetime})`, "warn")
+        pushLog(`CREATE Ticket « ${row[F2.TITRE]} » statut ${STATUS_MAP[(row[F2.STATUS]).toLowerCase()]} (${datetime})`, "warn")
 
         let glpiId = `DRY-TICKET-${ref}`
 
