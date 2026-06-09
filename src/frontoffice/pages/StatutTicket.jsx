@@ -5,6 +5,7 @@ import Ticket from "../../common/entities/Ticket.jsx";
 import { TICKET_STATUS } from "../../common/constants/TicketConstants.jsx";
 import TicketDetail from "./TicketDetail.jsx";
 import "../../common/styles/tickets.css"; // Importation du même fichier CSS
+import CreateTicket from "./CreateTicket.jsx";
 
 const STATUS_LABELS = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
 
@@ -15,6 +16,7 @@ function Badge({ status }) {
 export default function StatutTicket() {
   const [tickets, setTickets] = React.useState([]);
   const [showDetail, setShowDetail] = React.useState(false);
+  const [showCreate, setShowCreate] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [selectedTicket, setSelectedTicket] = React.useState();
   
@@ -60,6 +62,9 @@ export default function StatutTicket() {
     setShowDetail(prev => !prev)
   }
 
+  async function handleShowCreate(){
+    setShowCreate(prev => !prev)
+  }
 
   // Événement déclenché au début du glissement de la carte
   const onDragStart = (e, id) => {
@@ -113,7 +118,7 @@ export default function StatutTicket() {
             ))}
           </ul>
           <br />
-          <button>Ajouter un ticket</button>
+          <button onClick={handleShowCreate}>Ajouter un ticket</button>
       </div>
     );
   };
@@ -126,6 +131,14 @@ export default function StatutTicket() {
         <div className="contenu-popup">
             <button className="btn-fermer" onClick={() => setShowDetail(false)}>X</button>
             <TicketDetail ticket={selectedTicket} />
+        </div>
+      </div>
+    }
+    {showCreate && 
+      <div className="overlay-popup active" id="monPopup">
+        <div className="contenu-popup">
+            <button className="btn-fermer" onClick={() => setShowCreate()}>X</button>
+            <CreateTicket />
         </div>
       </div>
     }
