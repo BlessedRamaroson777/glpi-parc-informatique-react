@@ -11,7 +11,7 @@ import { getAllAssets } from "../services/assetsService.jsx";
 import "../styles/create-ticket.css";
 import apiV1 from "../../common/utils/apiV1.jsx";
 
-export default function CreateTicket() {
+export default function CreateTicket({ statusTicket: propStatusTicket }) {
     const [formData, setFormData] = useState({
         name: "",
         content: "",
@@ -19,7 +19,7 @@ export default function CreateTicket() {
         urgency: 3, // 1 = Très basse, 5 = Très haute
         impact: 3, 
         priority: 3, 
-        status: 1, // 1 = Nouveau, 2 = Attribué, etc.
+        status: propStatusTicket ?? 1, // 1 = Nouveau, 2 = Attribué, etc.
         requesttypes_id: 1, // par défaut Helpdesk (1)
         itilcategories_id: 0,
         locations_id: 0,
@@ -34,7 +34,7 @@ export default function CreateTicket() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedAssets, setSelectedAssets] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState(null);
+    const [status, setStatus] = useState(propStatusTicket ?? null);
     const [showDropdown, setShowDropdown] = useState(false);
 
     // Listes de référentiels chargées depuis GLPI

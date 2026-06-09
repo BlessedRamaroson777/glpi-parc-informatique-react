@@ -66,9 +66,9 @@ export default function RefreshTokenButton() {
       await refreshAuthSession();
       setExpiresAt(getExpiresAtMs());
       setStatus(isAuto ? "Auto-refresh OK" : "Refresh OK");
-      if (!isAuto) {
-        navigate("/admin", { replace: true });
-      }
+      // if (!isAuto) {
+      //   navigate("/admin", { replace: true });
+      // }
     } catch (error) {
       setStatus(`Erreur: ${error.message}`);
       if (isAuto) {
