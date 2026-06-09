@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { clearTokens } from "../../common/services/authService.jsx";
+import { clearTokens } from "../services/authService.jsx";
 import "../styles/login.css";
 
 export default function LogoutButton() {

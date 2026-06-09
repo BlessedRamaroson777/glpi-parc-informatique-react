@@ -4,7 +4,7 @@ import {
   getExpiresAtMs,
   getRefreshToken,
   refreshAuthSession,
-} from "../../common/services/authService.jsx";
+} from "../services/authService.jsx";
 import { useNavigate } from "react-router-dom";
 
 function formatClock(ms) {
@@ -54,6 +54,9 @@ export default function RefreshTokenButton() {
   }, []);
 
   async function handleRefresh(isAuto = false) {
+    console.log("expiresAt:", expiresAt)
+    console.log("remainingMs:", remainingMs)
+    console.log("now:", now)
     if (isRefreshing) return;
 
     setIsRefreshing(true);
@@ -102,7 +105,8 @@ export default function RefreshTokenButton() {
 
   const refreshLabel = isRefreshing ? "Refresh..." : "Refresh token";
 
-  const statusText = status || expiresLabel;
+  const statusText = expiresAt ? expiresLabel : status || "Aucun token trouvé";
+  // const statusText = status || expiresLabel;
 
   const statusColor = status.startsWith("Erreur") ? "#b42318" : "var(--text)";
 
