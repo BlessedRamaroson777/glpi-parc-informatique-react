@@ -1,7 +1,9 @@
 import apiV1 from "../../common/utils/apiV1.jsx"
 import apiV2 from "../../common/utils/apiV2.jsx"
+import { apiRequest } from "../../common/services/authService.jsx"
 import { parseCsv } from "../utils/importUtils.jsx"
 import { F2 } from "../constants/importConstants.jsx"
+import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 
 const TYPE_MAP     = { "incident": 1, "request": 2, "demande": 2 }
 const STATUS_MAP   = { "new": 1, "processing": 2, "pending": 4, "solved": 5, "closed": 6 }
@@ -22,6 +24,33 @@ function resolveItemType(name, assetRegistry) {
     for (const [itemtype, map] of assetRegistry) {
         if (map.has(name)) return { itemtype, items_id: map.get(name) }
     }
+    return null
+}
+
+async function findAssetByName(assetName) {
+
+    for (const asset of ASSET_TYPES) {
+        try {
+            const type = asset.key
+
+            const res = await apiRequest(
+                `/api.php/v2/Assets/${asset.key}?filter=name=="${assetName}"`,
+                { method: "GET" }
+            )
+
+            if (Array.isArray(res) && res.length > 0) {
+                return {
+                    itemtype: asset.key === "Socket" ? "Glpi\\Socket" : asset.key,
+                    items_id: res[0].id
+                }
+            }
+        } 
+        catch (err) {
+            console.error(err)
+            throw err
+        }
+    }
+
     return null
 }
 
@@ -107,11 +136,19 @@ export async function runFile2Import(csvText, pushLog, dryRun = false, registry 
 
         // ── Lier les assets (via V1 — Item_Ticket n'existe pas en V2) ───
         for (const assetName of parseItems(row[F2.ITEMS])) {
-            const resolved = resolveItemType(assetName, assetRegistry)
+            // const resolved = resolveItemType(assetName, assetRegistry)
+            // const resolved = await findAssetByName(assetName)
+            let resolved = resolveItemType(assetName, assetRegistry)
+
             if (!resolved) {
-                pushLog(`  ⚠ Asset « ${assetName} » non trouvé dans le registre`, "warn")
-                continue
+                try{
+                    resolved = await findAssetByName(assetName)
+                }
+                catch(err) {
+                    throw err
+                }
             }
+            
             const linkPayload = {
                 tickets_id: Number(glpiId),
                 itemtype:   normalizeItemtype(resolved.itemtype),

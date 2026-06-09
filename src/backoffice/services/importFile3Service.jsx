@@ -32,7 +32,6 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
 
         if (!glpiId) {
             // Fallback : recherche via external_id en V2
-            pushLog(`  ⚠ Ticket ref=${ref} absent du registre — recherche via external_id...`, "warn")
             try {
                 const res = await apiV2.get(
                     "/api.php/v2/Assistance/Ticket",
@@ -45,14 +44,10 @@ export async function runFile3Import(csvText, pushLog, dryRun = false, registry 
                         .replace("T", " ").slice(0, 19)
                     pushLog(`  ↳ Ticket trouvé id=${glpiId}`, "success")
                 }
-            } catch {
-                glpiId = null
+            } catch (err) {
+                pushLog(`  ⚠ Ticket ref=${ref} introuvable — ligne ignorée`, "warn")
+                throw new Error(`Ticket ref=${ref} introuvable`)
             }
-        }
-
-        if (!glpiId) {
-            pushLog(`  ⚠ Ticket ref=${ref} introuvable — ligne ignorée`, "warn")
-            continue
         }
 
         // Fallback date si toujours absente

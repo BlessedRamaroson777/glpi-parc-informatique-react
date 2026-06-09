@@ -96,7 +96,9 @@ export function useImport() {
                 IMPORT_STEPS.forEach(s => next.add(s.key))
                 return next
             })
+            
             setCurrentStep(null)
+            alert("Import terminé avec succès !")
         } catch (err) {
             pushLog(`Erreur fatale : ${err.message}`, "error")
             setErrorStep(currentStep)
