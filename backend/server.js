@@ -4,6 +4,11 @@ import { openDb } from "./db.js";
 
 const app = express();
 const db = openDb();
+const DEFAULT_KANBAN_COLORS = {
+  status1: "#dcfce7",
+  status2: "#dbeafe",
+  status5: "#fad1d7",
+};
 
 app.use(cors());
 app.use(express.json());
@@ -167,6 +172,7 @@ app.get("/api/langue-statut", (req, res) => {
     FROM langueStatut ls
     INNER JOIN langues l ON ls.langueId = l.id
     INNER JOIN statuts s ON ls.statutId = s.id
+    WHERE TRIM(ls.valeur) <> ''
     ORDER BY ls.id DESC`,
     (error, rows) => {
       if (error) {
@@ -238,11 +244,16 @@ app.delete("/api/langue-statut/:id", (req, res) => {
 app.get("/api/langue-statut/langue/:langueId", (req, res) => {
   const langueId = Number(req.params.langueId);
 
+  if (!langueId) {
+    return res.status(400).json({ error: "Invalid langueId" });
+  }
+
   db.all(
     `SELECT 
       ls.id,
       ls.valeur,
       l.nom AS langueNom,
+      s.id AS statutId,
       s.nom AS statutNom
     FROM langueStatut ls
     INNER JOIN langues l ON ls.langueId = l.id
@@ -309,36 +320,81 @@ app.post("/api/langue-with-statuts", (req, res) => {
 });
 
 app.post("/api/langue-statut/bulk", (req, res) => {
-  const { langueId, traductions } = req.body;
+    const { langueId, traductions } = req.body
+    if (!langueId || !Array.isArray(traductions)) {
+        return res.status(400).json({ error: "Missing data" })
+    }
 
-  if (!langueId || !Array.isArray(traductions)) {
-    return res.status(400).json({ error: "Missing data" });
-  }
+    // Supprime les anciennes entrées pour cette langue puis réinsère
+    db.run("DELETE FROM langueStatut WHERE langueId = ?", [langueId], (err) => {
+        if (err) return res.status(500).json({ error: err.message })
 
-  const stmt = db.prepare(`
-    INSERT INTO langueStatut (langueId, statutId, valeur)
-    VALUES (?, ?, ?)
-  `);
+        const stmt = db.prepare(
+            "INSERT INTO langueStatut (langueId, statutId, valeur) VALUES (?, ?, ?)"
+        )
+        for (const t of traductions) {
+            stmt.run(langueId, t.statutId, (t.valeur || "").trim())
+        }
+        stmt.finalize()
+        res.status(201).json({ inserted: traductions.length })
+    })
+})
 
-  for (const t of traductions) {
-    stmt.run(langueId, t.statutId, t.valeur || "");
-  }
+app.get("/api/kanban-colors", (req, res) => {
+  db.get(
+    "SELECT settingValue FROM appSettings WHERE settingKey = ?",
+    ["kanban.colors"],
+    (error, row) => {
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
 
-  stmt.finalize();
+      if (!row) {
+        return res.json({ colors: DEFAULT_KANBAN_COLORS });
+      }
 
-  res.status(201).json({ inserted: traductions.length });
+      try {
+        const parsed = JSON.parse(row.settingValue);
+        res.json({ colors: { ...DEFAULT_KANBAN_COLORS, ...parsed } });
+      } catch {
+        res.json({ colors: DEFAULT_KANBAN_COLORS });
+      }
+    }
+  );
 });
 
-app.put("/api/langue-statut/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const { valeur } = req.body;
+app.put("/api/kanban-colors", (req, res) => {
+  const colors = req.body?.colors;
+  const keys = ["status1", "status2", "status5"];
+
+  if (!colors || typeof colors !== "object") {
+    return res.status(400).json({ error: "Missing colors" });
+  }
+
+  for (const key of keys) {
+    const value = colors[key];
+    if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) {
+      return res.status(400).json({ error: `Invalid color for ${key}` });
+    }
+  }
+
+  const settingValue = JSON.stringify({
+    status1: colors.status1,
+    status2: colors.status2,
+    status5: colors.status5,
+  });
 
   db.run(
-    "UPDATE langueStatut SET valeur = ? WHERE id = ?",
-    [valeur, id],
-    function (err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ updated: this.changes });
+    `INSERT INTO appSettings (settingKey, settingValue)
+     VALUES (?, ?)
+     ON CONFLICT(settingKey) DO UPDATE SET settingValue = excluded.settingValue`,
+    ["kanban.colors", settingValue],
+    function (error) {
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+
+      res.json({ updated: true });
     }
   );
 });
