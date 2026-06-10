@@ -1,7 +1,6 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import apiV2 from "../../common/utils/apiV2.jsx"
-import { getTickets, searchTickets, updateTicketStatus, getTicketById } from "../../common/services/ticketService.jsx";
+import { getTickets, searchTickets, getTicketById } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
 import { TICKET_STATUS } from "../../common/constants/TicketConstants.jsx";
 import TicketDetail from "./TicketDetail.jsx";
@@ -9,6 +8,12 @@ import "../../common/styles/tickets.css"; // Importation du même fichier CSS
 import CreateTicket from "./CreateTicket.jsx";
 
 const STATUS_LABELS = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
+const SETTINGS_API = "http://localhost:5050";
+const DEFAULT_KANBAN_COLORS = {
+  status1: "#dcfce7",
+  status2: "#dbeafe",
+  status5: "#fad1d7",
+};
 
 function Badge({ status }) {
   return <span className={`badge badge-list badge-status-${status}`}>{STATUS_LABELS[status] || `Statut ${status}`}</span>;
@@ -18,17 +23,29 @@ export default function StatutTicket() {
   const [tickets, setTickets] = React.useState([]);
   const [showDetail, setShowDetail] = React.useState(false);
   const [showCreate, setShowCreate] = React.useState(false);
-  const [showCommunicate, setShowCommunicate] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [selectedTicket, setSelectedTicket] = React.useState();
-  const [idDragged, setIdDragged] = React.useState();
   const [status, setStatus] = React.useState();
-  
-  const navigate = useNavigate();
+  const [kanbanColors, setKanbanColors] = React.useState(DEFAULT_KANBAN_COLORS);
 
   React.useEffect(() => {
     loadTickets();
+    loadKanbanColors();
   }, []);
+
+  async function loadKanbanColors() {
+    try {
+      const response = await fetch(`${SETTINGS_API}/api/kanban-colors`);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Erreur de chargement des couleurs");
+      }
+      setKanbanColors({ ...DEFAULT_KANBAN_COLORS, ...(data.colors || {}) });
+    } catch (error) {
+      console.error(error);
+      setKanbanColors(DEFAULT_KANBAN_COLORS);
+    }
+  }
 
   async function loadTickets() {
       const data = await getTickets();
@@ -98,20 +115,30 @@ export default function StatutTicket() {
     const res = await apiV2.patch(`/api.php/v2/Assistance/Ticket/${id}`, payload)
     console.log(res)
     loadTickets()
-    // setIdDragged(id);
-    // setStatus(newStatus);
-    // setShowCommunicate(prev => !prev)
   };
 
-  // async function handleCommuniquer(){
-  // }
+  function getColumnStyle(statusValue) {
+    const color = kanbanColors[`status${statusValue}`];
+    if (!color) {
+      return undefined;
+    }
+
+    return {
+      backgroundColor: color,
+      border: `1px solid ${color}`,
+      borderRadius: "8px",
+      padding: "10px",
+    };
+  }
 
   const renderColumn = (status, label, length) => {
     return (
       <div 
         onDragOver={onDragOver} 
         onDrop={(e) => onDrop(e, status)}
-        key={label} className="status-group"
+        key={label}
+        className="status-group"
+        style={getColumnStyle(status)}
       >
         <h2 className="status-group-title">
           <Badge status={status} /> ({length})
