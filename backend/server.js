@@ -73,7 +73,7 @@ app.delete("/api/langues/:id", (req, res) => {
 
 
 app.get("/api/statuts", (req, res) => {
-  db.all("SELECT id, nom FROM statuts ORDER BY id DESC", (error, rows) => {
+  db.all("SELECT id, nom, externalId FROM statuts ORDER BY id DESC", (error, rows) => {
     if (error) {
       res.status(500).json({ error: error.message });
       return;
@@ -91,13 +91,13 @@ app.get("/api/statuts/:id", (req, res) => {
     return;
   }
 
-  db.get("SELECT id, nom FROM statuts WHERE id = ?", [id], (error, row) => {
+  db.get("SELECT id, nom, externalId FROM statuts WHERE id = ?", [id], (error, row) => {
     if (error) {
       res.status(500).json({ error: error.message });
       return;
     }
 
-    res.json({ langue: row });
+    res.json({ statut: row });
   });
 });
 

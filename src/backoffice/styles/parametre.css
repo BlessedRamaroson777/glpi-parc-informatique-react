@@ -1,0 +1,138 @@
+.parametre-page {
+    padding: 1.5rem;
+}
+
+.parametre-page h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.parametre-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    justify-content: space-around;
+
+}
+
+.card {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card h2 {
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.card-form input {
+    flex: 1;
+    min-width: 140px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.card-form input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.card-form button {
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--primary-dark);
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.card-form button.btn-ghost {
+    background: transparent;
+    color: var(--primary-dark);
+}
+
+.item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.item-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.item-list .actions {
+    display: flex;
+    gap: 6px;
+}
+
+.item-list button {
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.trad-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.trad-input {
+    width: 55%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.trad-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.badge {
+    font-size: 11px;
+    padding: 2px 7px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 999px;
+}
+
+.status-msg {
+    font-size: 13px;
+    color: var(--muted);
+}
