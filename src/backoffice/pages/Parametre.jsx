@@ -1,13 +1,24 @@
 import { useEffect, useState } from "react"
 import "../styles/parametre.css"
+import ParametreLanguesCard from "../components/ParametreLanguesCard.jsx"
+import ParametreStatutsCard from "../components/ParametreStatutsCard.jsx"
+import ParametreTraductionsCard from "../components/ParametreTraductionsCard.jsx"
+import ParametreCorrespondancesCard from "../components/ParametreCorrespondancesCard.jsx"
+import ParametreKanbanColorsCard from "../components/ParametreKanbanColorsCard.jsx"
 
 const API = "http://localhost:5050"
+const DEFAULT_KANBAN_COLORS = {
+    status1: "#dcfce7",
+    status2: "#dbeafe",
+    status5: "#fad1d7",
+}
 
 export default function Parametre() {
     const [langues,  setLangues]  = useState([])
     const [statuts,  setStatuts]  = useState([])
 
     const [nomLangue, setNomLangue] = useState("")
+    const [nomNouvelleLangue, setNomNouvelleLangue] = useState("")
     const [nomStatut, setNomStatut] = useState("")
     const [externalId, setExternalId] = useState("")
 
@@ -15,106 +26,181 @@ export default function Parametre() {
     const [traductions, setTraductions] = useState({})
     const [status, setStatus] = useState("")
 
+    const [allTrads, setAllTrads] = useState([])
+    const [kanbanColors, setKanbanColors] = useState(DEFAULT_KANBAN_COLORS)
+    const [kanbanMessage, setKanbanMessage] = useState("")
+    const [savingColors, setSavingColors] = useState(false)
+
+    async function requestJSON(url, options) {
+        const response = await fetch(url, options)
+        const data = await response.json()
+        if (!response.ok) {
+            throw new Error(data?.error || "Erreur API")
+        }
+        return data
+    }
+
     async function loadLangues() {
-        const r = await fetch(`${API}/api/langues`)
-        const d = await r.json()
+                const d = await requestJSON(`${API}/api/langues`)
         setLangues(d.langues || [])
     }
 
     async function loadStatuts() {
-        const r = await fetch(`${API}/api/statuts`)
-        const d = await r.json()
+                const d = await requestJSON(`${API}/api/statuts`)
         setStatuts(d.statuts || [])
     }
 
-    useEffect(() => { loadLangues(); loadStatuts() }, [])
+    async function loadAllTrads() {
+            const d = await requestJSON(`${API}/api/langue-statut`)
+      setAllTrads(d.langueStatut || [])
+    }
+
+        async function loadKanbanColors() {
+                const d = await requestJSON(`${API}/api/kanban-colors`)
+                setKanbanColors({ ...DEFAULT_KANBAN_COLORS, ...(d.colors || {}) })
+        }
+
+        useEffect(() => {
+                loadLangues()
+                loadStatuts()
+                loadAllTrads()
+                loadKanbanColors()
+        }, [])
+
 
     // ── Langues ──────────────────────────────────────────────────────────
     async function createLangue(e) {
         e.preventDefault()
         if (!nomLangue.trim()) return
-        await fetch(`${API}/api/langues`, {
+        await requestJSON(`${API}/api/langues`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ nom: nomLangue }),
         })
         setNomLangue("")
-        loadLangues()
+        await loadLangues()
     }
 
     async function deleteLangue(id) {
-        await fetch(`${API}/api/langues/${id}`, { method: "DELETE" })
-        loadLangues()
+        await requestJSON(`${API}/api/langues/${id}`, { method: "DELETE" })
+        await loadLangues()
+        await loadAllTrads()
     }
 
     // ── Statuts ──────────────────────────────────────────────────────────
     async function createStatut(e) {
         e.preventDefault()
         if (!nomStatut.trim()) return
-        await fetch(`${API}/api/statuts`, {
+        await requestJSON(`${API}/api/statuts`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ nom: nomStatut, externalId }),
         })
         setNomStatut(""); setExternalId("")
-        loadStatuts()
+        await loadStatuts()
     }
 
     async function deleteStatut(id) {
-        await fetch(`${API}/api/statuts/${id}`, { method: "DELETE" })
-        loadStatuts()
+        await requestJSON(`${API}/api/statuts/${id}`, { method: "DELETE" })
+        await loadStatuts()
+        await loadAllTrads()
     }
 
     // ── Traductions ───────────────────────────────────────────────────────
     async function selectLangue(l) {
         setSelectedLangue(l)
-        const r = await fetch(`${API}/api/langue-statut/langue/${l.id}`)
-        const d = await r.json()
+        const d = await requestJSON(`${API}/api/langue-statut/langue/${l.id}`)
         const map = {}
-        d.langueStatut.forEach(x => { map[x.statutId] = x.valeur })
+        ;(d.langueStatut || []).forEach(x => { map[x.statutId] = x.valeur })
         setTraductions(map)
+        setStatus("")
     }
 
     function clearEdit() {
-        setSelectedLangue(null); setTraductions({}); setStatus("")
+        setSelectedLangue(null)
+        setTraductions({})
+        setNomNouvelleLangue("")
     }
 
     async function saveLangueStatut(e) {
         e.preventDefault()
-        setStatus("Saving...")
+        setStatus("Sauvegarde en cours...")
 
-        let langueId = selectedLangue?.id
+        try {
+            let langueId = selectedLangue?.id
 
-        if (!langueId) {
-            if (!nomLangue.trim()) {
-                setStatus("Entrez un nom de langue")
-                return
+            if (!langueId) {
+                if (!nomNouvelleLangue.trim()) {
+                    setStatus("Entrez un nom de langue")
+                    return
+                }
+                const d = await requestJSON(`${API}/api/langues`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nom: nomNouvelleLangue.trim() }),
+                })
+                langueId = d.id
+                setNomNouvelleLangue("")
             }
-            const r = await fetch(`${API}/api/langues`, {
+
+            const payload = statuts.map(s => ({
+                statutId: s.id,
+                valeur: traductions[s.id] || "",
+            }))
+
+            await requestJSON(`${API}/api/langue-statut/bulk`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nom: nomLangue }),
+                body: JSON.stringify({ langueId, traductions: payload }),
             })
-            const d = await r.json()
-            langueId = d.id
-            setNomLangue("")
-            loadLangues()
+
+            setStatus("Sauvegarde reussie")
+            clearEdit()
+            await loadLangues()
+            await loadAllTrads()
+        } catch (error) {
+            setStatus(error.message || "Erreur de sauvegarde")
         }
+    }
 
-        const payload = statuts.map(s => ({
-            statutId: s.id,
-            valeur: traductions[s.id] || "",
-        }))
+    function updateColor(key, value) {
+        setKanbanColors(prev => ({ ...prev, [key]: value }))
+    }
 
-        await fetch(`${API}/api/langue-statut/bulk`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ langueId, traductions: payload }),
-        })
+    async function saveKanbanColors(e) {
+        e.preventDefault()
+        setSavingColors(true)
+        setKanbanMessage("Sauvegarde en cours...")
+        try {
+            await requestJSON(`${API}/api/kanban-colors`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ colors: kanbanColors }),
+            })
+            setKanbanMessage("Couleurs sauvegardees")
+        } catch (error) {
+            setKanbanMessage(error.message || "Erreur de sauvegarde")
+        } finally {
+            setSavingColors(false)
+        }
+    }
 
-        setStatus("Sauvegardé ✓")
-        clearEdit()
-        loadLangues()
+    async function resetKanbanColors() {
+        setKanbanColors(DEFAULT_KANBAN_COLORS)
+        setSavingColors(true)
+        setKanbanMessage("Reinitialisation en cours...")
+        try {
+            await requestJSON(`${API}/api/kanban-colors`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ colors: DEFAULT_KANBAN_COLORS }),
+            })
+            setKanbanMessage("Couleurs reinitialisees")
+        } catch (error) {
+            setKanbanMessage(error.message || "Erreur de reinitialisation")
+        } finally {
+            setSavingColors(false)
+        }
     }
 
     return (
@@ -122,94 +208,49 @@ export default function Parametre() {
             <h1>Paramètres</h1>
 
             <div className="parametre-grid">
+                <ParametreLanguesCard
+                    nomLangue={nomLangue}
+                    onNomLangueChange={setNomLangue}
+                    onCreateLangue={createLangue}
+                    langues={langues}
+                    onSelectLangue={selectLangue}
+                    onDeleteLangue={deleteLangue}
+                />
 
-                {/* Langues */}
-                <div className="card">
-                    <h2>Langues</h2>
-                    <form onSubmit={createLangue} className="card-form">
-                        <input
-                            value={nomLangue}
-                            onChange={e => setNomLangue(e.target.value)}
-                            placeholder="Nom de la langue"
-                        />
-                        <button type="submit">Ajouter</button>
-                    </form>
-                    <ul className="item-list">
-                        {langues.map(l => (
-                            <li key={l.id}>
-                                <span>{l.nom}</span>
-                                <div className="actions">
-                                    <button onClick={() => selectLangue(l)}>Éditer</button>
-                                    <button onClick={() => deleteLangue(l.id)}>Supprimer</button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                <ParametreStatutsCard
+                    nomStatut={nomStatut}
+                    externalId={externalId}
+                    onNomStatutChange={setNomStatut}
+                    onExternalIdChange={setExternalId}
+                    onCreateStatut={createStatut}
+                    statuts={statuts}
+                    onDeleteStatut={deleteStatut}
+                />
 
-                {/* Statuts */}
-                <div className="card">
-                    <h2>Statuts</h2>
-                    <form onSubmit={createStatut} className="card-form">
-                        <input
-                            value={nomStatut}
-                            onChange={e => setNomStatut(e.target.value)}
-                            placeholder="Nom"
-                        />
-                        <input
-                            value={externalId}
-                            onChange={e => setExternalId(e.target.value)}
-                            placeholder="ID externe"
-                        />
-                        <button type="submit">Ajouter</button>
-                    </form>
-                    <ul className="item-list">
-                        {statuts.map(s => (
-                            <li key={s.id}>
-                                <span>{s.nom} <small style={{ color: "#9ca3af" }}>({s.externalId})</small></span>
-                                <button onClick={() => deleteStatut(s.id)}>Supprimer</button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                <ParametreTraductionsCard
+                    selectedLangue={selectedLangue}
+                    statuts={statuts}
+                    traductions={traductions}
+                    nomNouvelleLangue={nomNouvelleLangue}
+                    status={status}
+                    onNomNouvelleLangueChange={setNomNouvelleLangue}
+                    onSave={saveLangueStatut}
+                    onClearEdit={clearEdit}
+                    onTraductionChange={(statutId, valeur) => {
+                        setTraductions(prev => ({ ...prev, [statutId]: valeur }))
+                    }}
+                />
 
-                {/* Traductions */}
-                <div className="card" style={{ borderColor: "var(--primary)", borderWidth: 2 }}>
-                    <h2>
-                        Traductions
-                        {selectedLangue && <span className="badge">{selectedLangue.nom}</span>}
-                    </h2>
-                    <form onSubmit={saveLangueStatut} className="card-form">
-                        {!selectedLangue && (
-                            <input
-                                value={nomLangue}
-                                onChange={e => setNomLangue(e.target.value)}
-                                placeholder="Nom de la nouvelle langue"
-                            />
-                        )}
-                        <button type="submit">
-                            {selectedLangue ? "Mettre à jour" : "Créer langue"}
-                        </button>
-                        {selectedLangue && (
-                            <button type="button" className="btn-ghost" onClick={clearEdit}>
-                                Annuler
-                            </button>
-                        )}
-                    </form>
-                    <ul className="item-list">
-                        {statuts.map(s => (
-                            <li key={s.id} className="trad-row">
-                                <b>{s.nom}</b>
-                                <input
-                                    className="trad-input"
-                                    value={traductions[s.id] || ""}
-                                    onChange={e => setTraductions(p => ({ ...p, [s.id]: e.target.value }))}
-                                />
-                            </li>
-                        ))}
-                    </ul>
-                    {status && <p className="status-msg">{status}</p>}
-                </div>
+                <ParametreCorrespondancesCard allTrads={allTrads} />
+
+                <ParametreKanbanColorsCard
+                    colors={kanbanColors}
+                    saving={savingColors}
+                    message={kanbanMessage}
+                    onColorChange={updateColor}
+                    onSave={saveKanbanColors}
+                    onReset={resetKanbanColors}
+                />
 
             </div>
         </div>
