@@ -13,3 +13,38 @@ export function openDb() {
 
   return db;
 }
+
+export function openLangue() {
+  const db = new sqlite3.Database(DB_PATH);
+
+  db.serialize(() => {
+    db.run(
+      "CREATE TABLE IF NOT EXISTS langues (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT NOT NULL)"
+    );
+  });
+
+  return db;
+}
+
+export function openStatut() {
+  const db = new sqlite3.Database(DB_PATH);
+
+  db.serialize(() => {
+    db.run(
+      "CREATE TABLE IF NOT EXISTS statuts (id INTEGER PRIMARY KEY AUTOINCREMENT, nom TEXT NOT NULL,valeurInitial TEXT NOT NULL,externalId INTEGER )");
+  });
+
+  return db;
+}
+
+
+export function openLangueStatut() {
+  const db = new sqlite3.Database(DB_PATH);
+
+  db.serialize(() => {
+    db.run(
+      "CREATE TABLE IF NOT EXISTS langueStatut (id INTEGER PRIMARY KEY AUTOINCREMENT, langueId INTEGER NOT NULL,statutId INTEGER NOT NULL,valeur TEXT NOT NULL,FOREIGN KEY (langueId) REFERENCES langues(id))");
+  });
+
+  return db;
+}
