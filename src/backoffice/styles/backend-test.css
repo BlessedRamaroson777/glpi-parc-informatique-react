@@ -60,3 +60,38 @@
   color: var(--primary-dark);
   cursor: pointer;
 }
+
+.backend-test-content {
+  display: flex;
+  /* gap: 16px; */
+  justify-content: space-around;
+  flex-wrap: wrap;   /* 👈 IMPORTANT */
+}
+
+.backend-test-content .div {
+  flex: 1 1 300px;
+  max-width: 350px;
+  width: 500px;
+  
+}
+.backend-test-content h4 {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.backend-test-content input {
+  transition: 0.2s;
+}
+
+.backend-test-content input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+}
+
+.backend-test-content span {
+  display: flex;
+  align-items: center;
+}

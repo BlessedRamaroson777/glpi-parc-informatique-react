@@ -9,6 +9,7 @@ import Login from "./pages/Login.jsx";
 import Reinitialisation from "./pages/Reinitialisation.jsx";
 import Import from "./pages/Import.jsx";
 import TicketDetail from "./pages/TicketDetail.jsx";
+import Parametre from "./pages/Parametre.jsx"
 
 export default function BackofficeApp() {
   return (
@@ -51,6 +52,15 @@ export default function BackofficeApp() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="parametre"
+          element={
+            <ProtectedRoute>
+              <Parametre />
+            </ProtectedRoute>
+          }
+        />        
 
         <Route
           path="reinitialisation"

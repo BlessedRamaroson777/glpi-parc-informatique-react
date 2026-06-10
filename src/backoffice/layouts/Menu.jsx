@@ -14,6 +14,8 @@ export default function Menu() {
         <Link to="/admin/backend-test">Backend Test</Link>
         <Link to="/admin/reinitialisation">Reinitialisation</Link>
         <Link to="/admin/import">Import</Link>
+        <Link to="/admin/parametre">Parametre</Link>
+        
       </div>
 
       <div className="menu-actions">
