@@ -133,8 +133,8 @@
 .badge {
     font-size: 11px;
     padding: 2px 7px;
-    background: var(--primary);
-    color: #fff;
+    background: rgb(232, 218, 218);
+    color: #232121;
     border-radius: 999px;
 }
 
