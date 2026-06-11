@@ -5,7 +5,13 @@
 //     { value: 4, label: "En attente" },
 //     { value: 5, label: "Résolu" },
 //     { value: 6, label: "Clos" },
-// ];
+// ];    
+export const TICKET_STATUS_NOTUSED = [
+    { value: 3, label: "En cours Planifié" }, 
+    { value: 4, label: "En attente" }, 
+    { value: 5, label: "Résolu" }, 
+    { value: 10, label: "Validation" }
+]; // Statuts à ne pas utiliser dans l'application (ex: pour les imports)
 export const TICKET_STATUS = [
     { value: 1, label: "Nouveau" },
     { value: 2, label: "En cours Attribué" },

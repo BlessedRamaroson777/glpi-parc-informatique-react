@@ -3,3 +3,4 @@
 
 export const API_BASE_URL = "";
 export const USER_ADMIN = 'glpi';
+export const API = "http://localhost:5050"

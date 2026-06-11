@@ -247,7 +247,7 @@ app.get("/api/langue-statut/langue/:langueId", (req, res) => {
       ls.id,
       ls.valeur,
       l.nom AS langueNom,
-      s.id AS statutId,
+      s.externalId AS statutId,
       s.nom AS statutNom
     FROM langueStatut ls
     INNER JOIN langues l ON ls.langueId = l.id
