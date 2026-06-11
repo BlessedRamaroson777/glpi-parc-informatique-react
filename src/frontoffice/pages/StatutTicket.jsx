@@ -84,6 +84,12 @@ export default function StatutTicket() {
     setShowCreate(prev => !prev)
   }
 
+  function handleCloseCreate() {
+    setShowCreate(false);
+    loadTickets();
+    loadKanbanColors();
+  }
+
   // Événement déclenché au début du glissement de la carte
   const onDragStart = (e, id) => {
     e.dataTransfer.setData("text/plain", id);
@@ -181,7 +187,7 @@ export default function StatutTicket() {
     {showCreate && 
       <div className="overlay-popup active" id="monPopup">
         <div className="contenu-popup">
-            <button className="btn-fermer" onClick={() => setShowCreate(false)}>X</button>
+            <button className="btn-fermer" onClick={handleCloseCreate}>X</button>
             <CreateTicket statusTicket={status}/>
         </div>
       </div>
