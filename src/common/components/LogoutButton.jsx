@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { clearTokens, logoutBackoffice } from "../services/authService.jsx";
 import "../styles/login.css";
+import Langue from "./Langue.jsx";
 
 export default function LogoutButton() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function LogoutButton() {
           </button>
         </div>
 
+          <Langue />
     </div>
   );
 }
