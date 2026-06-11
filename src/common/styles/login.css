@@ -40,3 +40,8 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.logout-container {
+  display: flex;
+  gap: 12px;
+}
