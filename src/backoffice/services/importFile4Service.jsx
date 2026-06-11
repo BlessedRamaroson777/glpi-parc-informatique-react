@@ -1,5 +1,7 @@
 import JSZip from "jszip"
 import apiV1 from "../../common/utils/apiV1.jsx"
+import { apiRequest } from "../../common/services/authService.jsx"
+import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 
 // ─── Magic bytes ───────────────────────────────────────────────────────────
 const IMAGE_SIGNATURES = [
@@ -19,8 +21,61 @@ function detectType(bytes) {
     return null
 }
 
+function resolveAsset(name, assetRegistry) {
+    for (const [itemtype, map] of assetRegistry) {
+        if (map.has(name)) {
+            return {
+                itemtype,
+                items_id: map.get(name)
+            }
+        }
+    }
+    return null
+}
+
+async function buildRegistryFromGlpi(assetNames, pushLog) {
+    pushLog("↳ Registre vide — chargement depuis GLPI...", "info")
+
+    const nameSet = new Set(assetNames)
+    const registry = new Map()
+
+    for (const asset of ASSET_TYPES) {
+        try {
+            // Une seule requête par type — pas de filtre, on filtre côté client
+            const res = await apiRequest(
+                `/api.php/v2/Assets/${asset.key}?range=0-999`,
+                { method: "GET" }
+            )
+
+            if (!Array.isArray(res) || res.length === 0) continue
+
+            const map = new Map()
+            for (const item of res) {
+                if (nameSet.has(item.name)) {
+                    map.set(item.name, item.id)
+                }
+            }
+
+            if (map.size > 0) {
+                const itemtype = asset.key === "Socket" ? "Glpi\\Socket" : asset.key
+                registry.set(itemtype, map)
+                pushLog(`  ↳ ${asset.key}: ${map.size} asset(s) trouvé(s)`, "info")
+            }
+        } catch (err) {
+            pushLog(`  ⚠ Erreur chargement ${asset.key}: ${err.message}`, "warn")
+            // non-bloquant — on continue avec les autres types
+        }
+    }
+
+    const total = [...registry.values()].reduce((acc, m) => acc + m.size, 0)
+    pushLog(`↳ Registre reconstruit (${total} assets trouvés)`, "success")
+    return registry
+}
+
 export async function runFile4Import(zipFile, pushLog, dryRun = false, registry = {}) {
     pushLog("═══ Feuille 4 : Images ═══", "info")
+
+    const { assetRegistry = new Map() } = registry
 
     const zip = await JSZip.loadAsync(zipFile)
     const imageFiles = Object.entries(zip.files).filter(([name, file]) =>
@@ -32,14 +87,30 @@ export async function runFile4Import(zipFile, pushLog, dryRun = false, registry 
 
     pushLog(`${imageFiles.length} image(s) trouvée(s) dans le ZIP`, "info")
 
+    // ── Reconstruction du registre si absent ──────────────────────────────
+    if (assetRegistry.size === 0) {
+        const assetNames = imageFiles.map(([filename]) =>
+            filename.split("/").pop().replace(/\.[^.]+$/, "")
+        )
+        assetRegistry = await buildRegistryFromGlpi(assetNames, pushLog)
+    }
+
     let count = 0
 
     for (const [filename, zipEntry] of imageFiles) {
         const baseName  = filename.split("/").pop()
         const assetName = baseName.replace(/\.[^.]+$/, "")
 
-        const assetId  = registry.computers.get(assetName) ?? registry.monitors.get(assetName)
-        const itemtype = registry.computers.has(assetName) ? "Computer" : "Monitor"
+
+        const resolved = resolveAsset(assetName, assetRegistry)
+
+        if (!resolved) {
+            pushLog(`⚠ Asset « ${assetName} » non trouvé dans le registre — ignoré`, "warn")
+            continue
+        }
+
+        const assetId  = resolved.items_id
+        const itemtype = resolved.itemtype
 
         if (!assetId) {
             pushLog(`  ⚠ Asset « ${assetName} » non trouvé dans le registre — ignoré`, "warn")
@@ -89,6 +160,21 @@ export async function runFile4Import(zipFile, pushLog, dryRun = false, registry 
             const res = await apiV1.post("Document", formData)
             const id  = Array.isArray(res) ? res[0]?.id : res?.id
             pushLog(`  ↳ Document créé id=${id}`, "success")
+
+            // ── Vérification liaison ──────────────────────────────────────
+            // if (id) {
+            //     try {
+            //         const doc = await apiV1.getItem("Document", id)
+            //         const linked = doc?.items_id === assetId && doc?.itemtype === itemtype
+            //         if (linked) {
+            //             pushLog(`  ✓ Liaison confirmée → ${itemtype} #${assetId}`, "success")
+            //         } else {
+            //             pushLog(`  ⚠ Document créé mais liaison incorrecte (itemtype=${doc?.itemtype}, items_id=${doc?.items_id})`, "error")
+            //         }
+            //     } catch {
+            //         pushLog(`  ℹ Impossible de vérifier la liaison`, "warn")
+            //     }
+            // }
             count++
         } catch (err) {
             pushLog(`  ⚠ Erreur ${baseName}: ${err.message}`, "error")
