@@ -26,7 +26,7 @@ async function fetchDocumentBlobUrl(docId) {
 
     const attempts = [
         `${baseUrl}/Document/${docId}?alt=media`,
-        `${baseUrl}/Document/${docId}&alt=media`,
+        `${baseUrl}/Document/${docId}?alt=media&dl=1`,
     ]
 
     const headers = {}
@@ -62,49 +62,38 @@ async function fetchDocumentBlobUrl(docId) {
 // ─── API publique ──────────────────────────────────────────────────────────
 export async function getItemDocuments(itemtype, itemsId, assetName = "") {
     try {
-        // 1. Appel de base à l'API Document
-        const docs = await apiV1.get("Document", { itemtype, items_id: itemsId })
-        
-        console.log("=== DEBUG DOCUMENT IMAGE ===")
-        console.log("Recherche pour :", { itemtype, itemsId, assetName })
-        console.log("Données brutes reçues de l'API Document :", docs)
-        
-        if (!Array.isArray(docs) || docs.length === 0) return []
-
-        // 2. Filtrage intelligent côté client si l'API renvoie trop de choses ou ne filtre pas
-        const filteredDocs = docs.filter(doc => {
-            // Option A : Si GLPI expose directement itemtype et items_id au premier niveau
-            if (doc.itemtype && doc.items_id) {
-                return doc.itemtype === itemtype && String(doc.items_id) === String(itemsId)
-            }
-            
-            // Option B : Fallback si GLPI lie le document uniquement par le nom de l'Asset
-            if (assetName && doc.name) {
-                return doc.name.toLowerCase() === assetName.toLowerCase() && doc.filename
-            }
-
-            // Par défaut si l'API a bien fait le tri en amont grâce aux paramètres d'URL
-            return true
+        // Document_Item = table de liaison GLPI entre un item et ses documents
+        const links = await apiV1.get("Document_Item", { 
+            searchText: JSON.stringify({ itemtype, items_id: itemsId }),
+            "searchText[itemtype]": itemtype,
+            "searchText[items_id]": itemsId,
         })
 
-        console.log("Documents retenus après filtrage local :", filteredDocs)
+        console.log("=== Document_Item links ===", links)
 
-        // 3. Traitement et téléchargement des binaires retenus
+        if (!Array.isArray(links) || links.length === 0) return []
+
+        // Filtrage strict par itemtype + items_id
+        const filtered = links.filter(link =>
+            link.itemtype === itemtype && String(link.items_id) === String(itemsId)
+        )
+
+        console.log("Links filtrés :", filtered)
+
         const results = await Promise.all(
-            filteredDocs.map(async (doc) => {
-                if (!doc.id) return null
+            filtered.map(async (link) => {
+                const docId = link.documents_id
+                if (!docId) return null
                 try {
-                    const blobUrl = await fetchDocumentBlobUrl(doc.id)
+                    const blobUrl = await fetchDocumentBlobUrl(docId)
                     if (!blobUrl) return null
                     return {
-                        id:       doc.id,
-                        name:     doc.name || doc.filename,
-                        filename: doc.filename,
+                        id:       docId,
+                        name:     link.name || String(docId),
+                        filename: link.filename,
                         url:      blobUrl,
                     }
-                } catch {
-                    return null
-                }
+                } catch { return null }
             })
         )
 
