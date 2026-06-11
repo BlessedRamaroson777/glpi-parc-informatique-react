@@ -1,4 +1,4 @@
 Ref_Ticket,Date,Heure,Type,Titre,Description,Status,Priority,Items
 1,03/06/2026,13:45,Incident,Tsy mandeha,hafahafa be,New,Medium,"[""PC-ADM-001""]"
 2,04/06/2026,13:45,Incident,Michauffe,mamay be,in progress (assigned),Medium,"[""PC-ADM-001"",""MN-FORM-002""]"
-3,04/06/2026,13:45,Incident,Michauffe,mamay be,resolved,Medium,"[""MN-FORM-002""]"
+3,04/06/2026,13:45,Incident,Michauffe,mamay be,Closed,Medium,"[""MN-FORM-002""]"

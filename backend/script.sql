@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS appSettings (
 );
 
 -- ── 1. INSERTION DES LANGUES ────────────────────────────────────────────────
-INSERT INTO langues (id, nom) VALUES 
-(1, 'Français'),
+,INSERT INTO langues (id, nom) VALUES 
+(1, 'Français')
 (2, 'Malagasy');
 
 -- ── 2. INSERTION DES STATUTS ────────────────────────────────────────────────
