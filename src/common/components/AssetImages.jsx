@@ -132,18 +132,24 @@ export function AssetImagesCell({ asset }) {
     const [loading, setLoading] = React.useState(true)
 
     React.useEffect(() => {
-        if (!asset?.id || !asset?.type) {
-            setLoading(false)
-            return
-        }
+      if (!asset?.id || !asset?.type) { setLoading(false); return }
+      
+      const cacheKey = `${asset.type}-${asset.id}`
+      if (imageCache.has(cacheKey)) {
+          setImages(imageCache.get(cacheKey))
+          setLoading(false)
+          return
+      }
 
-        setLoading(true)
-        getItemDocuments(asset.type, asset.id, asset.name)
-            .then(setImages)
-            .catch(() => setImages([]))
-            .finally(() => setLoading(false))
-            
-    }, [asset?.id, asset?.type, asset?.name])
+      setLoading(true)
+      getItemDocuments(asset.type, asset.id, asset.name)
+          .then(docs => {
+              imageCache.set(cacheKey, docs)  // cache dans la Map importée
+              setImages(docs)
+          })
+          .catch(() => setImages([]))
+          .finally(() => setLoading(false))
+  }, [asset?.id, asset?.type])
 
     if (loading) return <Skeleton size={40} />
     if (!images || images.length === 0) return <span style={{ color: "var(--text-muted)" }}>—</span>
