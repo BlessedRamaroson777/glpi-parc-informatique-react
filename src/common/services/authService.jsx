@@ -11,7 +11,31 @@ const CLIENT_ID = import.meta.env.VITE_GLPI_CLIENT_ID || "";
 const CLIENT_SECRET = import.meta.env.VITE_GLPI_CLIENT_SECRET || "";
 const OAUTH_TOKEN_PATH = "/api.php/token";
 
+const BACKOFFICE_AUTH_KEY = "backoffice_auth";
+
+const USERNAME = "glpi";
+const PASSWORD = "glpi";
+
 let refreshInFlight = null;
+
+
+
+export function loginBackoffice({ username, password }) {
+  if (username === USERNAME && password === PASSWORD) {
+    localStorage.setItem(BACKOFFICE_AUTH_KEY, "true");
+    return true;
+  }
+  return false;
+}
+
+export function logoutBackoffice() {
+    localStorage.removeItem(BACKOFFICE_AUTH_KEY);
+}
+
+export function isBackofficeAuthenticated() {
+    return localStorage.getItem(BACKOFFICE_AUTH_KEY) === "true";
+}
+
 
 function emitAuthUpdate() {
   window.dispatchEvent(new CustomEvent(TOKEN_UPDATE_EVENT));
@@ -132,7 +156,6 @@ async function parseResponse(response) {
 
   return text;
 }
-
 export async function login({ username, password }) {
   const body = {
     grant_type: "password",
