@@ -1,32 +1,32 @@
 // Feuille 1
 export const F1 = {
-    NAME:             "Name",
-    STATUS:           "Status",
-    LOCATION:         "Location",
-    MANUFACTURER:     "Manufacturer",
-    ITEM_TYPE:        "Item_Type",
-    MODEL:            "Model",
-    INVENTORY_NUMBER: "Inventory_Number",
-    USER:             "User",
+    NAME:             "name",
+    STATUS:           "status",
+    LOCATION:         "location",
+    MANUFACTURER:     "manufacturer",
+    ITEM_TYPE:        "item_type",
+    MODEL:            "model",
+    INVENTORY_NUMBER: "inventory_number",
+    USER:             "user",
 }
 
 // Feuille 2
 export const F2 = {
-    REF:         "Ref_Ticket",
-    DATE:        "Date",
-    HEURE:       "Heure",
-    TYPE:        "Type",
-    TITRE:       "Titre",
-    DESCRIPTION: "Description",
-    STATUS:      "Status",
-    PRIORITY:    "Priority",
-    ITEMS:       "Items",
+    REF:         "ref_ticket",
+    DATE:        "date",
+    HEURE:       "heure",
+    TYPE:        "type",
+    TITRE:       "titre",
+    DESCRIPTION: "description",
+    STATUS:      "status",
+    PRIORITY:    "priority",
+    ITEMS:       "items",
 }
 
 // Feuille 3
 export const F3 = {
-    NUM_TICKET:       "Num_Ticket",
-    DURATION_SECOND:  "Duration_second",
-    TIME_COST:        "Time_Cost",
-    FIXED_COST:       "Fixed_Cost",
+    NUM_TICKET:       "num_ticket",
+    DURATION_SECOND:  "duration_second",
+    TIME_COST:        "time_cost",
+    FIXED_COST:       "fixed_cost",
 }
