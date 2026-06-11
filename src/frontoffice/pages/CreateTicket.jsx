@@ -34,7 +34,7 @@ export default function CreateTicket({ statusTicket: propStatusTicket }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedAssets, setSelectedAssets] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState(propStatusTicket ?? null);
+    const [status, setStatus] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
 
     // Listes de référentiels chargées depuis GLPI

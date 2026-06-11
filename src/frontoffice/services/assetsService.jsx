@@ -34,7 +34,7 @@ function normalize(item, type) {
 
 // GET tous les assets d'un type
 export async function getAssets(type) {
-    const data = await apiV2.get(`${BASE_V2}/${type}`, { expand_dropdowns: "true" })
+    const data = await apiV2.get(`${BASE_V2}/${type}?range=0-999`, { expand_dropdowns: "true" })
     return Array.isArray(data) ? data.map(item => normalize(item, type)) : []
 }
 
@@ -74,7 +74,7 @@ export async function getDropdownOptions(itemType) {
     try {
         const endpoint = DROPDOWN_ENDPOINTS[itemType]
         if (!endpoint) return []
-        const data = await apiV2.get(`/api.php/v2.3/${endpoint}`)
+        const data = await apiV2.get(`/api.php/v2.3/${endpoint}?range=0-999`)
         return Array.isArray(data) ? data.map(item => item.completename || item.name).filter(Boolean) : []
     } catch (err) {
         console.error(`Failed to fetch ${itemType} options`, err)

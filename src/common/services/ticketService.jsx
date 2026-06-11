@@ -1,11 +1,12 @@
 import apiV2 from "../utils/apiV2.jsx"
 import apiV1 from "../utils/apiV1.jsx"
+import { API } from "../constants/apiConfig.jsx";
 
 const BASE = "/api.php/v2.3/Assistance/Ticket"
 
 // GET ALL
 export function getTickets(params = {}) {
-    return apiV2.get(BASE, params)
+    return apiV2.get(`${BASE}?start=0&limit=999`, params)
 }
 
 // GET BY ID
@@ -60,4 +61,19 @@ export async function getTicketItems(ticketId) {
     })
 
     return result
+}
+
+export async function loadStatusTranslations() {
+  const langId = localStorage.getItem("langueId") || "1";
+  
+  // Utilisation d'un fetch standard si requestJSON n'est pas dispo globalement
+  const response = await fetch(`http://localhost:5050/api/langue-statut/langue/${langId}`);
+  const d = await response.json();
+
+  const translations = {};
+  (d.langueStatut || []).forEach(x => {
+    translations[x.statutId] = x.valeur;
+  });
+
+  return translations; // ✓ On retourne l'objet mappé { "1": "Nouveau", "2": "En cours..." }
 }
