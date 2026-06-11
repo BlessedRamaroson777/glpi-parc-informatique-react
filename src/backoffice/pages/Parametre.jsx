@@ -5,14 +5,9 @@ import ParametreStatutsCard from "../components/ParametreStatutsCard.jsx"
 import ParametreTraductionsCard from "../components/ParametreTraductionsCard.jsx"
 import ParametreCorrespondancesCard from "../components/ParametreCorrespondancesCard.jsx"
 import ParametreKanbanColorsCard from "../components/ParametreKanbanColorsCard.jsx"
+import { DEFAULT_KANBAN_COLORS } from "../../common/constants/TicketConstants.jsx";
 
 const API = "http://localhost:5050"
-const DEFAULT_KANBAN_COLORS = {
-    status1: "#dcfce7",
-    status2: "#dbeafe",
-    status5: "#fad1d7",
-}
-
 export default function Parametre() {
     const [langues,  setLangues]  = useState([])
     const [statuts,  setStatuts]  = useState([])
@@ -37,6 +32,7 @@ export default function Parametre() {
         if (!response.ok) {
             throw new Error(data?.error || "Erreur API")
         }
+        console.log(data)
         return data
     }
 
@@ -177,6 +173,7 @@ export default function Parametre() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ colors: kanbanColors }),
             })
+            // console.log(kanbanColors)
             setKanbanMessage("Couleurs sauvegardees")
         } catch (error) {
             setKanbanMessage(error.message || "Erreur de sauvegarde")

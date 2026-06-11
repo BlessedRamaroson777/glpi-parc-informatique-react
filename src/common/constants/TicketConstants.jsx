@@ -11,14 +11,14 @@ export const TICKET_STATUS = [
     { value: 2, label: "En cours Attribué" },
     // { value: 3, label: "En cours Planifié" },
     // { value: 4, label: "En attente" },
-    { value: 5, label: "Resolu" },
-    // { value: 6, label: "Clos" },
+    // { value: 5, label: "Resolu" },
+    { value: 6, label: "Clos" },
     // { value: 10, label: "Validation" },
 ];
 
 export const TICKET_STATUS_IMPORT = [
     { value: 1, label: "New" },
-    { value: 2, label: "In Progress" },
+    { value: 2, label: "In Progress (Assigned)" },
     { value: 3, label: "Planned" },
     { value: 4, label: "Processing" },
     { value: 5, label: "Solved" },
@@ -29,6 +29,16 @@ export const TICKET_TYPES_IMPORT = [
     { value: 1, label: "Incident" },
     { value: 2, label: "Request" }
 ];
+
+export const DEFAULT_KANBAN_COLORS = {
+  status1: "#dcfce7",
+  status2: "#dbeafe",
+  status3: "#fad1d7",
+  status4: "#f3e8ff",
+  status5: "#fad1d7",
+  status6: "#f3e8ff",
+  status10: "#f3e8ff",
+};
 
 export const TICKET_TYPES = [
     { value: 1, label: "Incident" },

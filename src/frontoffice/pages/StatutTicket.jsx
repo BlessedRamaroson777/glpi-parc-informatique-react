@@ -6,14 +6,10 @@ import { TICKET_STATUS } from "../../common/constants/TicketConstants.jsx";
 import TicketDetail from "./TicketDetail.jsx";
 import "../../common/styles/tickets.css"; // Importation du même fichier CSS
 import CreateTicket from "./CreateTicket.jsx";
+import { DEFAULT_KANBAN_COLORS } from "../../common/constants/TicketConstants.jsx";
 
 const STATUS_LABELS = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
 const SETTINGS_API = "http://localhost:5050";
-const DEFAULT_KANBAN_COLORS = {
-  status1: "#dcfce7",
-  status2: "#dbeafe",
-  status5: "#fad1d7",
-};
 
 function Badge({ status }) {
   return <span className={`badge badge-list badge-status-${status}`}>{STATUS_LABELS[status] || `Statut ${status}`}</span>;
