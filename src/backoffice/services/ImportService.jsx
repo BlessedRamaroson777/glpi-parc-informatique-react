@@ -53,11 +53,33 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
 
             // Pré-remplir ticketDates depuis le CSV (comme avant)
             const f2Rows = parseCsv(file2)
+            // f2Rows.forEach(row => {
+            //     const [d, m, y] = row.Date.split("/")
+            //     const dt = `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")} ${row.Heure}:00`
+            //     registry.ticketDates.set(row.Ref_Ticket, dt)
+            // })
             f2Rows.forEach(row => {
-                const [d, m, y] = row.Date.split("/")
-                const dt = `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")} ${row.Heure}:00`
-                registry.ticketDates.set(row.Ref_Ticket, dt)
-            })
+                // Sécurité si lf2Rows.forEach(row => {
+                if (!row.Date || !row.Heure) return;
+
+                const cleanDate = String(row.Date).trim();
+                let y, m, d;
+
+                if (cleanDate.includes("-")) {
+                    [y, m, d] = cleanDate.split("-");
+                } else if (cleanDate.includes("/")) {
+                    [d, m, y] = cleanDate.split("/");
+                } else {
+                    registry.ticketDates.set(row.Ref_Ticket, `${cleanDate} ${String(row.Heure).trim()}:00`);
+                    return;
+                }
+
+                // ✅ Vérification avant padStart
+                if (!y || !m || !d) return;
+
+                const dt = `${String(y).trim()}-${String(m).trim().padStart(2,"0")}-${String(d).trim().padStart(2,"0")} ${String(row.Heure).trim()}:00`;
+                registry.ticketDates.set(row.Ref_Ticket, dt);
+            });
 
             // F2 retourne maintenant { ticketIds, ticketDates }
             const f2Result = await runFile2Import(file2, pushLog, dryRun, registry)
@@ -98,17 +120,18 @@ export async function runFullImport(csvTexts, pushLog, setCurrentStep, dryRun = 
     } catch (err) {
         pushLog(`❌ Erreur fatale : ${err.message}`, "error")
 
-        if (!dryRun) {
-            pushLog("⏳ Rollback en cours — réinitialisation des données importées…", "warn")
-            try {
-                await runResetForAll(pushLog, false)
-                pushLog("✓ Rollback terminé", "success")
-            } catch (resetErr) {
-                pushLog(`⚠ Erreur pendant le rollback : ${resetErr.message}`, "error")
-            }
-        }
+        // if (!dryRun) {
+        //     pushLog("⏳ Rollback en cours — réinitialisation des données importées…", "warn")
+        //     try {
+        //         await runResetForAll(pushLog, false)
+        //         pushLog("✓ Rollback terminé", "success")
+        //     } catch (resetErr) {
+        //         pushLog(`⚠ Erreur pendant le rollback : ${resetErr.message}`, "error")
+        //     }
+        // }
 
-        throw err
+        // throw err
+        return
     }
 
     return registry
