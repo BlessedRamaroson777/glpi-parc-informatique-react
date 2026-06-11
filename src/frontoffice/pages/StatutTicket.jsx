@@ -1,41 +1,60 @@
 import React from "react";
 import apiV2 from "../../common/utils/apiV2.jsx"
-import { getTickets, searchTickets, getTicketById } from "../../common/services/ticketService.jsx";
+import { getTickets, searchTickets, getTicketById, loadStatusTranslations } from "../../common/services/ticketService.jsx";
 import Ticket from "../../common/entities/Ticket.jsx";
-import { TICKET_STATUS } from "../../common/constants/TicketConstants.jsx";
 import TicketDetail from "./TicketDetail.jsx";
-import "../../common/styles/tickets.css"; // Importation du même fichier CSS
+import "../../common/styles/tickets.css"; 
 import CreateTicket from "./CreateTicket.jsx";
 import { DEFAULT_KANBAN_COLORS } from "../../common/constants/TicketConstants.jsx";
+import Solution from "../components/Solution.jsx";
 
-const STATUS_LABELS = Object.fromEntries(TICKET_STATUS.map(s => [s.value, s.label]));
 const SETTINGS_API = "http://localhost:5050";
-
-function Badge({ status }) {
-  return <span className={`badge badge-list badge-status-${status}`}>{STATUS_LABELS[status] || `Statut ${status}`}</span>;
-}
 
 export default function StatutTicket() {
   const [tickets, setTickets] = React.useState([]);
   const [showDetail, setShowDetail] = React.useState(false);
   const [showCreate, setShowCreate] = React.useState(false);
+  const [showSolution, setShowSolution] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [selectedTicket, setSelectedTicket] = React.useState();
   const [status, setStatus] = React.useState();
   const [kanbanColors, setKanbanColors] = React.useState(DEFAULT_KANBAN_COLORS);
 
+  // ✓ VOTRE IDÉE : TICKET_STATUS devient un état qui va recevoir le résultat du chargement
+  const [ticketStatusList, setTicketStatusList] = React.useState([]);
+
+  // Badge mis à jour pour utiliser vos traductions dynamiques
+  function Badge({ status }) {
+    const found = ticketStatusList.find(s => Number(s.value) === Number(status));
+    return (
+      <span className={`badge badge-list badge-status-${status}`}>
+        {found ? found.label : `Statut ${status}`}
+      </span>
+    );
+  }
+
   React.useEffect(() => {
     loadTickets();
     loadKanbanColors();
+    
+    // ✓ On charge vos traductions au démarrage et on met à jour votre variable globale du composant
+    loadStatusTranslations().then(translations => {
+      // translations ressemble à : { "1": "Nouveau", "2": "En cours..." }
+      // On le transforme en tableau [{ value: 1, label: "Nouveau" }, ...]
+      const formattedStatus = Object.entries(translations).map(([id, valeur]) => ({
+        value: Number(id),
+        label: valeur
+      }));
+      
+      setTicketStatusList(formattedStatus);
+    });
   }, []);
 
   async function loadKanbanColors() {
     try {
       const response = await fetch(`${SETTINGS_API}/api/kanban-colors`);
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || "Erreur de chargement des couleurs");
-      }
+      if (!response.ok) throw new Error(data?.error || "Erreur couleurs");
       setKanbanColors({ ...DEFAULT_KANBAN_COLORS, ...(data.colors || {}) });
     } catch (error) {
       console.error(error);
@@ -45,8 +64,7 @@ export default function StatutTicket() {
 
   async function loadTickets() {
       const data = await getTickets();
-      const liste = data.map(item => new Ticket(item))
-      const items = liste.map((ticket) => ({
+      const items = data.map(item => new Ticket(item)).map((ticket) => ({
         ...ticket,
         col: ticket.status,
       }))
@@ -54,35 +72,30 @@ export default function StatutTicket() {
   }
 
   async function handleSearch(e) {
-    console.log("Recherche en cours pour :", e.target.value);
     const value = e.target.value;
     setSearch(value);
-
     if (value.trim() === "") {
       loadTickets();
       return;
     }
     try {
       const data = await searchTickets(value);
-      // CRUCIAL : Mapper les données reçues avec la classe Ticket
-      console.log("Données reçues de l'API :", data);
-      
       setTickets(data.map(item => new Ticket(item)))
     } catch (error) {
-      console.error("Erreur lors de la recherche :", error);
-      setTickets([]); // Évite de faire planter l'affichage en cas d'erreur API
+      console.error(error);
+      setTickets([]); 
     }
   }
   
-  async function handleShowDetail(ticketId){
-    setSelectedTicket(ticketId);
-    setShowDetail(prev => !prev)
-  }
+  const handleShowDetail = (ticket) => {
+    setSelectedTicket(ticket);
+    setShowDetail(prev => !prev);
+  };
 
-  async function handleShowCreate(statusId){
+  const handleShowCreate = (statusId) => {
     setStatus(statusId);
-    setShowCreate(prev => !prev)
-  }
+    setShowCreate(prev => !prev);
+  };
 
   function handleCloseCreate() {
     setShowCreate(false);
@@ -90,41 +103,27 @@ export default function StatutTicket() {
     loadKanbanColors();
   }
 
-  // Événement déclenché au début du glissement de la carte
   const onDragStart = (e, id) => {
     e.dataTransfer.setData("text/plain", id);
   };
 
-  // Permet à la colonne de recevoir un élément déposé
   const onDragOver = (e) => {
     e.preventDefault();
   };
 
-  // Événement déclenché lors du dépôt de la carte dans une colonne
   const onDrop = async (e, newStatus) => {
     const id = parseInt(e.dataTransfer.getData("text/plain"), 10);
-
-    // const updatedtickets = tickets.map(ticket => 
-    //   ticket.id === id ? { ...ticket, status: newStatus } : ticket
-    // );
-    // setTickets(updatedtickets);
     const ticketChanger = await getTicketById(id)
-    // const update = await updateTicketStatus(ticketChanger, newStatus)
-    const payload = {
-      ...ticketChanger,
-      status: newStatus
-    }
-    const res = await apiV2.patch(`/api.php/v2/Assistance/Ticket/${id}`, payload)
-    console.log(res)
-    loadTickets()
+    const payload = { ...ticketChanger, status: newStatus }
+    await apiV2.patch(`/api.php/v2/Assistance/Ticket/${id}`, payload)
+    setSelectedTicket(id);
+    setShowSolution(true);
+    loadTickets();
   };
 
   function getColumnStyle(statusValue) {
     const color = kanbanColors[`status${statusValue}`];
-    if (!color) {
-      return undefined;
-    }
-
+    if (!color) return undefined;
     return {
       backgroundColor: color,
       border: `1px solid ${color}`,
@@ -138,7 +137,7 @@ export default function StatutTicket() {
       <div 
         onDragOver={onDragOver} 
         onDrop={(e) => onDrop(e, status)}
-        key={label}
+        key={status}
         className="status-group"
         style={getColumnStyle(status)}
       >
@@ -147,7 +146,7 @@ export default function StatutTicket() {
         </h2>
         <ul className="tickets-list">
           {tickets
-            .filter(ticket => ticket.status === status)
+            .filter(ticket => Number(ticket.status) === Number(status))
             .map(ticket => (
               <li
                   key={ticket.id}
@@ -184,6 +183,14 @@ export default function StatutTicket() {
         </div>
       </div>
     }
+    {showSolution && 
+      <div className="overlay-popup active" id="monPopup">
+        <div className="contenu-popup">
+            <button className="btn-fermer" onClick={() => setShowSolution(false)}>X</button>
+            <Solution idTicket={selectedTicket} />
+        </div>
+      </div>
+    }
     {showCreate && 
       <div className="overlay-popup active" id="monPopup">
         <div className="contenu-popup">
@@ -193,12 +200,10 @@ export default function StatutTicket() {
       </div>
     }
     <div className="tickets-list-statut">
-      {TICKET_STATUS.map(statusValue => {
+      {/* ✓ On boucle directement sur les colonnes dynamiques de l'API locale */}
+      {ticketStatusList.map(statusValue => {
           const filtered = tickets.filter(t => Number(t.status) === Number(statusValue.value))
-          // if (filtered.length === 0) return null
-          return (
-            renderColumn(statusValue.value,statusValue.label,filtered.length)
-          )
+          return renderColumn(statusValue.value, statusValue.label, filtered.length)
         })}
     </div>
     </section>
