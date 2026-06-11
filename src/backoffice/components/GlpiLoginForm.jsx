@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, saveTokens } from "../../common/services/authService.jsx";
+import { login, saveTokens, loginBackoffice } from "../../common/services/authService.jsx";
 import { USER_ADMIN } from "../../common/constants/apiConfig.jsx";
 
 export default function GlpiLoginForm() {
@@ -29,9 +29,22 @@ export default function GlpiLoginForm() {
     }
   }
 
+  async function handleLogin(event) {
+    event.preventDefault();
+    setStatus("Connexion...");
+
+    try {
+      const data = await loginBackoffice({ username, password });
+      navigate("/admin", { replace: true });
+
+    } catch (error) {
+      setStatus(`Erreur: ${error.message}`);
+    }
+  }
+
   return (
     <div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleLogin}>
         {/* <label htmlFor="glpi-username">Utilisateur</label>
         <input
         id="glpi-username"
