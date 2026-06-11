@@ -19,6 +19,11 @@ CREATE TABLE IF NOT EXISTS langueStatut (
     FOREIGN KEY (langueId) REFERENCES langues(id)
 );
 
+CREATE TABLE IF NOT EXISTS appSettings (
+    settingKey TEXT PRIMARY KEY, 
+    settingValue TEXT NOT NULL
+);
+
 -- ── 1. INSERTION DES LANGUES ────────────────────────────────────────────────
 INSERT INTO langues (id, nom) VALUES 
 (1, 'Français'),
@@ -43,6 +48,20 @@ INSERT INTO langueStatut (langueId, statutId, valeur) VALUES
 (2, 1, 'Vaovao'),               -- "Nouveau" en Malagasy
 (2, 2, 'An-dalam-pandrosoana'), -- "En cours" en Malagasy
 (2, 3, 'Voavaha');              -- "Résolu" en Malagasy
+
+INSERT OR IGNORE INTO appSettings (settingKey, settingValue)
+VALUES (
+  'kanban.colors',
+  '{
+    "status1": "#dcfce7",
+    "status2": "#dbeafe",
+    "status3": "#fad1d7",
+    "status4": "#f3e8ff",
+    "status5": "#fad1d7",
+    "status6": "#f3e8ff",
+    "status10": "#f3e8ff"
+  }'
+);
 
 SELECT 
     ls.id AS langueStatutId,

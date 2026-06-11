@@ -4,12 +4,6 @@ import { openDb } from "./db.js";
 
 const app = express();
 const db = openDb();
-const DEFAULT_KANBAN_COLORS = {
-  status1: "#dcfce7",
-  status2: "#dbeafe",
-  status5: "#fad1d7",
-};
-
 app.use(cors());
 app.use(express.json());
 
@@ -339,25 +333,27 @@ app.post("/api/langue-statut/bulk", (req, res) => {
         res.status(201).json({ inserted: traductions.length })
     })
 })
-
 app.get("/api/kanban-colors", (req, res) => {
+  console.log("API kanban-colors called");
+
   db.get(
     "SELECT settingValue FROM appSettings WHERE settingKey = ?",
     ["kanban.colors"],
     (error, row) => {
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
+      // console.log("ROW:", row);   //  AJOUT IMPORTANT
+
+      if (error) return res.status(500).json({ error: error.message });
 
       if (!row) {
-        return res.json({ colors: DEFAULT_KANBAN_COLORS });
+        return res.status(404).json({ error: "Colors not initialized" });
       }
 
       try {
-        const parsed = JSON.parse(row.settingValue);
-        res.json({ colors: { ...DEFAULT_KANBAN_COLORS, ...parsed } });
-      } catch {
-        res.json({ colors: DEFAULT_KANBAN_COLORS });
+        const colors = JSON.parse(row.settingValue);
+        // console.log("PARSED:", colors); //  AJOUT IMPORTANT
+        return res.json({ colors });
+      } catch (e) {
+        return res.status(500).json({ error: "Invalid JSON in DB" });
       }
     }
   );
@@ -365,24 +361,25 @@ app.get("/api/kanban-colors", (req, res) => {
 
 app.put("/api/kanban-colors", (req, res) => {
   const colors = req.body?.colors;
-  const keys = ["status1", "status2", "status5"];
+  // const keys = ["status1", "status2", "status5"];
 
   if (!colors || typeof colors !== "object") {
     return res.status(400).json({ error: "Missing colors" });
   }
 
-  for (const key of keys) {
-    const value = colors[key];
-    if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) {
-      return res.status(400).json({ error: `Invalid color for ${key}` });
+  for (const [key, value] of Object.entries(colors)) {
+    if (
+      typeof value !== "string" ||
+      !/^#[0-9a-fA-F]{6}$/.test(value)
+    ) {
+      return res.status(400).json({
+        error: `Invalid color for ${key}`,
+      });
     }
   }
 
-  const settingValue = JSON.stringify({
-    status1: colors.status1,
-    status2: colors.status2,
-    status5: colors.status5,
-  });
+  const settingValue = JSON.stringify(colors);
+  console.log(settingValue)
 
   db.run(
     `INSERT INTO appSettings (settingKey, settingValue)
