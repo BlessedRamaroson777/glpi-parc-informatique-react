@@ -6,8 +6,8 @@ import ParametreTraductionsCard from "../components/ParametreTraductionsCard.jsx
 import ParametreCorrespondancesCard from "../components/ParametreCorrespondancesCard.jsx"
 import ParametreKanbanColorsCard from "../components/ParametreKanbanColorsCard.jsx"
 import { DEFAULT_KANBAN_COLORS } from "../../common/constants/TicketConstants.jsx";
+import { API } from "../../common/constants/apiConfig.jsx";
 
-const API = "http://localhost:5050"
 export default function Parametre() {
     const [langues,  setLangues]  = useState([])
     const [statuts,  setStatuts]  = useState([])
