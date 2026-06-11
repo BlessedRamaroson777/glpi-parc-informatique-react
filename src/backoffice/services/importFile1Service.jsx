@@ -2,6 +2,7 @@ import { apiRequest, ensureV1Session } from "../../common/services/authService.j
 import apiV1 from "../../common/utils/apiV1.jsx"
 import { parseCsv } from "../utils/importUtils.jsx"
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
+import { F1 } from "../constants/importConstants.jsx"   // ← import F1
 
 // ── Mapping Item_Type CSV → endpoint GLPI V1 ────────────────────────────────
 
@@ -9,7 +10,6 @@ const ITEMTYPE_TO_ENDPOINT = Object.fromEntries(
     ASSET_TYPES.map(({ key }) => [key, key])
 )
 
-// Modèles GLPI par type d'asset
 const MODEL_ENDPOINT = {
     Computer:           "Dropdowns/ComputerModel",
     Monitor:            "Dropdowns/MonitorModel",
@@ -17,7 +17,6 @@ const MODEL_ENDPOINT = {
     Peripheral:         "Dropdowns/PeripheralModel",
     Phone:              "Dropdowns/PhoneModel",
     Printer:            "Dropdowns/PrinterModel",
-    // Les autres types n'ont pas de modèle dédié dans GLPI
 }
 
 const MODEL_FIELD = {
@@ -90,20 +89,18 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
     const locationIds     = new Map()
     const manufacturerIds = new Map()
     const stateIds        = new Map()
-    const modelIds        = new Map()   // "Computer:OptiPlex 7010" → id
+    const modelIds        = new Map()
     const userIds         = new Map()
 
-    // Registre dynamique : une Map par type d'asset
-    // ex: assetRegistry.get("Computer") → Map<name, glpiId>
     const assetRegistry = new Map()
     ASSET_TYPES.forEach(({ key }) => assetRegistry.set(key, new Map()))
 
     // ── Étape 1 : Référentiels ──────────────────────────────────────────
     pushLog("── Référentiels ──", "info")
 
-    const uniqueLocations     = [...new Set(rows.map(r => r.Location).filter(Boolean))]
-    const uniqueManufacturers = [...new Set(rows.map(r => r.Manufacturer).filter(Boolean))]
-    const uniqueStatuses      = [...new Set(rows.map(r => r.Status).filter(Boolean))]
+    const uniqueLocations     = [...new Set(rows.map(r => r[F1.LOCATION]).filter(Boolean))]
+    const uniqueManufacturers = [...new Set(rows.map(r => r[F1.MANUFACTURER]).filter(Boolean))]
+    const uniqueStatuses      = [...new Set(rows.map(r => r[F1.STATUS]).filter(Boolean))]
 
     for (const name of uniqueLocations) {
         locationIds.set(name, await resolveOrCreate("Dropdowns/Location", name, {}, pushLog, dryRun))
@@ -118,7 +115,10 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
     // Modèles — uniquement pour les types qui en ont
     for (const [itemtype, modelEndpoint] of Object.entries(MODEL_ENDPOINT)) {
         const names = [...new Set(
-            rows.filter(r => r.Item_Type === itemtype).map(r => r.Model).filter(Boolean)
+            rows
+                .filter(r => r[F1.ITEM_TYPE] === itemtype)
+                .map(r => r[F1.MODEL])
+                .filter(Boolean)
         )]
         for (const name of names) {
             modelIds.set(
@@ -131,7 +131,7 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
     // ── Étape 2 : Utilisateurs ──────────────────────────────────────────
     pushLog("── Utilisateurs ──", "info")
 
-    const uniqueUsers = [...new Set(rows.map(r => r.User).filter(Boolean))]
+    const uniqueUsers = [...new Set(rows.map(r => r[F1.USER]).filter(Boolean))]
 
     for (const fullName of uniqueUsers) {
         const parts    = fullName.trim().split(" ")
@@ -176,33 +176,25 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
     const today = new Date().toISOString().slice(0, 10)
 
     for (const row of rows) {
-        // const itemtype = row.Item_Type
-        // if (!itemtype || !ITEMTYPE_TO_ENDPOINT[itemtype]) {
-        //     pushLog(`  ⚠ Type inconnu « ${itemtype} » — ligne ignorée`, "warn")
-        //     continue
-        // }
-        const itemtype = row.Item_Type
-        // const endpoint = ITEMTYPE_TO_ENDPOINT[itemtype]
-        const endpoint =
-            itemtype === "Socket"
-                ? "Glpi\\Socket"
-                : itemtype
+        const itemtype = row[F1.ITEM_TYPE]
+        const endpoint = itemtype === "Socket" ? "Glpi\\Socket" : itemtype
 
         if (!itemtype || !endpoint) {
             pushLog(`⚠ Type inconnu « ${itemtype} » — ligne ignorée`, "warn")
             continue
         }
-        const modelKey   = `${itemtype}:${row.Model}`
+
+        const modelKey   = `${itemtype}:${row[F1.MODEL]}`
         const modelField = MODEL_FIELD[itemtype]
 
         const payload = {
-            name:             row.Name,
-            otherserial:      row.Inventory_Number,
-            serial:           row.Inventory_Number ?? "",
-            locations_id:     locationIds.get(row.Location)       ?? 0,
-            manufacturers_id: manufacturerIds.get(row.Manufacturer) ?? 0,
-            states_id:        stateIds.get(row.Status)             ?? 0,
-            users_id:         userIds.get(row.User)                ?? 0,
+            name:             row[F1.NAME],
+            otherserial:      row[F1.INVENTORY_NUMBER],
+            serial:           row[F1.INVENTORY_NUMBER] ?? "",
+            locations_id:     locationIds.get(row[F1.LOCATION])     ?? 0,
+            manufacturers_id: manufacturerIds.get(row[F1.MANUFACTURER]) ?? 0,
+            states_id:        stateIds.get(row[F1.STATUS])           ?? 0,
+            users_id:         userIds.get(row[F1.USER])              ?? 0,
             comment:          `Importé automatiquement le ${today}`,
             is_global:        0,
             date_mod:         `${today} 00:00:00`,
@@ -212,56 +204,41 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
             ),
         }
 
-        // Nettoie les valeurs nulles/zéro
         Object.keys(payload).forEach(k => {
             if (payload[k] === 0 || payload[k] === null || payload[k] === undefined || payload[k] === "") {
                 delete payload[k]
             }
         })
 
-        pushLog(`  CREATE ${itemtype} « ${row.Name} »`, "warn")
+        pushLog(`  CREATE ${itemtype} « ${row[F1.NAME]} »`, "warn")
 
         if (!dryRun) {
             try {
                 let res
-                // const res   = await apiV1.createItem(itemtype, { input: payload })
                 if (itemtype === "Socket") {
-                    res = await apiRequest(
-                        "/api.php/v2/Assets/Socket",
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify(payload)
-                        }
-                    )
-
-                    console.log(res)
-                }
-                else {
-                    res = await apiV1.createItem(itemtype, {
-                        input: payload
+                    res = await apiRequest("/api.php/v2/Assets/Socket", {
+                        method:  "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body:    JSON.stringify(payload),
                     })
+                } else {
+                    res = await apiV1.createItem(itemtype, { input: payload })
                 }
-                // const res = await apiV1.createItem(endpoint, {
-                //     input: payload
-                // })
+
                 const newId = Array.isArray(res) ? res[0]?.id : res?.id
                 if (newId) {
                     pushLog(`  ↳ id=${newId}`, "success")
-                    assetRegistry.get(itemtype)?.set(row.Name, newId)
+                    assetRegistry.get(itemtype)?.set(row[F1.NAME], newId)
                 } else {
-                    pushLog(`  ⚠ Pas d'ID retourné pour « ${row.Name} »`, "error")
-                    throw new Error(`Pas d'ID retourné pour « ${row.Name} »`)
+                    pushLog(`  ⚠ Pas d'ID retourné pour « ${row[F1.NAME]} »`, "error")
+                    throw new Error(`Pas d'ID retourné pour « ${row[F1.NAME]} »`)
                 }
             } catch (err) {
                 pushLog(`  ⚠ Erreur: ${err.message}`, "error")
-                throw new Error(`  ⚠ Erreur: ${err.message}`, "error")
-
+                throw new Error(`⚠ Erreur: ${err.message}`)
             }
         } else {
-            assetRegistry.get(itemtype)?.set(row.Name, `DRY-${row.Name}`)
+            assetRegistry.get(itemtype)?.set(row[F1.NAME], `DRY-${row[F1.NAME]}`)
         }
     }
 
@@ -273,11 +250,10 @@ export async function runFile1Import(csvText, pushLog, dryRun = true) {
         .join(", ")
     pushLog(`Feuille 1 terminée ✓ (${counts || "0 assets"})`, "success")
 
-    // Retourne le registre complet + rétrocompatibilité computers/monitors
     return {
         assetRegistry,
-        computers:    assetRegistry.get("Computer")  ?? new Map(),
-        monitors:     assetRegistry.get("Monitor")   ?? new Map(),
+        computers:    assetRegistry.get("Computer") ?? new Map(),
+        monitors:     assetRegistry.get("Monitor")  ?? new Map(),
         userIds,
         locationIds,
         manufacturerIds,
