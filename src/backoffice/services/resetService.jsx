@@ -38,7 +38,10 @@ export async function deleteEntity(entity, pushLog, dryRun = true) {
             const url   = `/api.php/v2/${endpoint.replace("{id}", parent.id)}`
             let items = []
             try {
-                items = normalizeItems(await apiRequest(url, { method: "GET" }))
+                // items = normalizeItems(await apiRequest(url, { method: "GET" }))
+                // ligne simple resource
+                items = normalizeItems(await apiRequest(`${url}?limit=1000`, { method: "GET" }))
+
             } catch (e) {
                 // CORRECTION : On ignore aussi l'erreur 400 "Not Found" spécifique à l'API v2 de GLPI
                 const isNotFound = e.message.includes("404") || 
@@ -65,7 +68,9 @@ export async function deleteEntity(entity, pushLog, dryRun = true) {
         const url   = `/api.php/v2/${endpoint}`
         let items = []
         try {
-            items = normalizeItems(await apiRequest(url, { method: "GET" }))
+            // items = normalizeItems(await apiRequest(url, { method: "GET" }))
+            items = normalizeItems(await apiRequest(`${url}?limit=1000`, { method: "GET" }))
+
         } catch (e) {
             pushLog(`Impossible de lister ${url} (${e.message})`, "warn")
             return
