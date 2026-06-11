@@ -62,3 +62,89 @@ export async function getUsers() {
     const data = await apiV2.get("/api.php/v2.3/Administration/User?range=0-200");
     return Array.isArray(data) ? data : (data?.data ?? []);
 }
+
+export async function ajoutSolution (tickets_id, content) {
+    // try {
+    //     // GLPI API expects data wrapped in an "input" object
+    //     const response = await apiV1.createItem("ITILSolution", { input: { 
+    //         itemtype: "Ticket", 
+    //         items_id: tickets_id, 
+    //         content: content, 
+    //         // solutiontypes_id: 0, // optionnel 
+    //     }})
+    //     return response; // Usually { id: 123, message: "..." }
+    // } catch (error) {
+    //     console.error("Error creating ticket:", error);
+    //     throw error;
+    // }
+    return await apiV1.createItem("ITILSolution", {
+        input: {
+            itemtype: "Ticket",
+            items_id: tickets_id,
+            content: content,
+            // solutiontypes_id: 0
+        }
+    });
+}
+
+export async function acceptSolution(solution_id) {
+    apiV1.updateItem("ITILSolution", solution_id, {
+        input: {
+            status: 3   // accepté / validé (selon GLPI)
+        }
+    });
+}
+
+export async function refuseSolution(solution_id) {
+    apiV1.updateItem("ITILSolution", solution_id, {
+        input: {
+            status: 4   // refusé / invalide (selon GLPI)
+        }
+    });
+}
+
+// TicketFollowup
+export async function ajoutCommentaire (tickets_id, content) {
+    // try {
+    //     // GLPI API expects data wrapped in an "input" object
+    //     const response = await apiV1.createItem("ITILSolution", { input: { 
+    //         itemtype: "Ticket", 
+    //         items_id: tickets_id, 
+    //         content: content, 
+    //         // solutiontypes_id: 0, // optionnel 
+    //     }})
+    //     return response; // Usually { id: 123, message: "..." }
+    // } catch (error) {
+    //     console.error("Error creating ticket:", error);
+    //     throw error;
+    // }
+    apiV1.updateItem("Ticket", tickets_id, {
+        input: {
+            solution: content,
+        }
+    })
+    // apiV2.post(`/api.php/v2/Assistance/Ticket/${tickets_id}/ITILSolution`, { content: content })
+}
+
+export async function ajoutDocumentCommentaire(document, tickets_id) {
+    const formData = new FormData();
+
+    formData.append("uploadManifest", JSON.stringify({
+    input: {
+        name: document.name,
+        itemtype: "Ticket",
+        items_id: tickets_id,
+    }
+    }));
+
+    formData.append("filename[0]", file);
+
+    fetch("/apirest.php/Document", {
+    method: "POST",
+    headers: {
+        "Session-Token": sessionToken,
+        "App-Token": appToken
+    },
+    body: formData
+    });
+}
