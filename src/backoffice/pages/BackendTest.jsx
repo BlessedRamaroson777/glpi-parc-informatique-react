@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/backend-test.css";
+import TicketCostsPage from "./TicketCostsPage.jsx"
+import StatutTraduit from "../../common/components/StatutTraduit.jsx";
 
 const API_BASE_URL = "http://localhost:5050";
 
@@ -61,6 +63,8 @@ export default function BackendTest() {
 
   return (
     <section className="backend-test-page">
+      {/* <TicketCostsPage /> */}
+      {/* <StatutTraduit /> */}
       <h1>Backend Test</h1>
       <p>Test rapide du backend Node + SQLite.</p>
 

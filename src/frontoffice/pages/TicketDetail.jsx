@@ -95,6 +95,15 @@ export default function TicketDetail({ ticket: propTicket }) {
         return sum + (c.cost_fixed || 0) + (c.cost_material || 0) + (c.cost_time || 0) * hours;
     }, 0);
 
+    {/* Totaux par colonne comme GLPI */}
+    const totalDuration = costs.reduce((sum, c) => sum + (c.duration || c.actiontime || 0), 0);
+    const totalFixed    = costs.reduce((sum, c) => sum + (c.cost_fixed || 0), 0);
+    const totalMaterial = costs.reduce((sum, c) => sum + (c.cost_material || 0), 0);
+    const totalTime     = costs.reduce((sum, c) => {
+        const hours = (c.duration || c.actiontime || 0) / 3600;
+        return sum + (c.cost_time || 0) * hours;
+    }, 0);
+
     return (
         <section className="ticket-detail-container">
             {/* <a onClick={() => navigate(-1)} className="btn-back" style={{ cursor: "pointer" }}>← Retour</a> */}
@@ -234,9 +243,32 @@ export default function TicketDetail({ ticket: propTicket }) {
                                 </div>
                             );
                         })}
-                        <div className="cost-total-bar">
-                            <strong>Total Général</strong>
+                        {/* <div className="cost-total-bar">
+                            <strong>Total Général: </strong>
                             <strong>{formatCurrency(totalCosts)}</strong>
+                            
+                        </div> */}
+                        <div className="cost-total-bar">
+                            <div className="cost-row">
+                                <span className="cost-label"><strong>Total durée</strong></span>
+                                <span className="cost-value"><strong>{formatDuration(totalDuration)}</strong></span>
+                            </div>
+                            <div className="cost-row">
+                                <span className="cost-label"><strong>Total coût horaire</strong></span>
+                                <span className="cost-value"><strong>{formatCurrency(totalTime)}</strong></span>
+                            </div>
+                            <div className="cost-row">
+                                <span className="cost-label"><strong>Total coût fixe</strong></span>
+                                <span className="cost-value"><strong>{formatCurrency(totalFixed)}</strong></span>
+                            </div>
+                            <div className="cost-row">
+                                <span className="cost-label"><strong>Total coût matériel</strong></span>
+                                <span className="cost-value"><strong>{formatCurrency(totalMaterial)}</strong></span>
+                            </div>
+                            <div className="cost-row" style={{ borderTop: "2px solid var(--primary)", paddingTop: "0.5rem", marginTop: "0.5rem" }}>
+                                <span className="cost-label"><strong>Total général</strong></span>
+                                <span className="cost-value"><strong>{formatCurrency(totalCosts)}</strong></span>
+                            </div>
                         </div>
                     </div>
                 )}

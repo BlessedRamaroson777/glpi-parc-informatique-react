@@ -77,3 +77,57 @@ export async function loadStatusTranslations() {
 
   return translations; // ✓ On retourne l'objet mappé { "1": "Nouveau", "2": "En cours..." }
 }
+
+/**
+ * Retourne les coûts de chaque ticket + les totaux globaux
+ * @param {number[]} ticketIds - liste d'IDs de tickets
+ * @returns {Promise<{ byTicket: Object, totals: Object }>}
+ */
+export async function getTicketsCosts(ticketIds) {
+    const results = await Promise.allSettled(
+        ticketIds.map(id =>
+            apiV2.get(`${BASE}/${id}/Cost`)
+                .then(data => ({ id, costs: Array.isArray(data) ? data : (data?.data ?? []) }))
+                .catch(() => ({ id, costs: [] }))
+        )
+    );
+
+    const byTicket = {};
+
+    for (const result of results) {
+        if (result.status !== "fulfilled") continue;
+        const { id, costs } = result.value;
+
+        const totalDuration = costs.reduce((s, c) => s + (c.duration || c.actiontime || 0), 0);
+        const totalFixed    = costs.reduce((s, c) => s + (c.cost_fixed || 0), 0);
+        const totalMaterial = costs.reduce((s, c) => s + (c.cost_material || 0), 0);
+        const totalTime     = costs.reduce((s, c) => {
+            const h = (c.duration || c.actiontime || 0) / 3600;
+            return s + (c.cost_time || 0) * h;
+        }, 0);
+        const totalGeneral  = totalFixed + totalMaterial + totalTime;
+
+        byTicket[id] = {
+            costs,
+            totalDuration,  // en secondes
+            totalFixed,
+            totalMaterial,
+            totalTime,      // coût horaire × heures
+            totalGeneral,
+        };
+    }
+
+    // Totaux globaux sur tous les tickets
+    const totals = Object.values(byTicket).reduce(
+        (acc, t) => ({
+            totalDuration: acc.totalDuration + t.totalDuration,
+            totalFixed:    acc.totalFixed    + t.totalFixed,
+            totalMaterial: acc.totalMaterial + t.totalMaterial,
+            totalTime:     acc.totalTime     + t.totalTime,
+            totalGeneral:  acc.totalGeneral  + t.totalGeneral,
+        }),
+        { totalDuration: 0, totalFixed: 0, totalMaterial: 0, totalTime: 0, totalGeneral: 0 }
+    );
+
+    return { byTicket, totals };
+}

@@ -28,19 +28,42 @@ export default function GlpiLoginForm() {
       setStatus(`Erreur: ${error.message}`);
     }
   }
-
+  
   async function handleLogin(event) {
     event.preventDefault();
     setStatus("Connexion...");
 
     try {
-      const data = await loginBackoffice({ username, password });
+      // 1. Login GLPI (récupère token OAuth + init session V1)
+      const data = await login({ username, password });
+      saveTokens({
+        accessToken: data.access_token || data.accessToken || data.session_token,
+        refreshToken: data.refresh_token || data.refreshToken,
+        expiresInSeconds: data.expires_in || data.expiresIn || 3600,
+      });
+
+      // 2. Login backoffice local
+      loginBackoffice({ username, password });
+
+      setStatus("OK");
       navigate("/admin", { replace: true });
 
     } catch (error) {
       setStatus(`Erreur: ${error.message}`);
     }
   }
+  // async function handleLogin(event) {
+  //   event.preventDefault();
+  //   setStatus("Connexion...");
+
+  //   try {
+  //     const data = await loginBackoffice({ username, password });
+  //     navigate("/admin", { replace: true });
+
+  //   } catch (error) {
+  //     setStatus(`Erreur: ${error.message}`);
+  //   }
+  // }
 
   return (
     <div>
