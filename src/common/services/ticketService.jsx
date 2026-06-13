@@ -147,3 +147,19 @@ export async function getTicketsCosts(ticketIds) {
 
     return { byTicket, totals };
 }
+
+export async function getTicketsWithAssetTypes(tickets) {
+    const results = [];
+    for (const ticket of tickets) {
+        try {
+            const itemsRes = await getTicketItems(ticket.id);
+            const items = Array.isArray(itemsRes) ? itemsRes : (itemsRes?.data ?? []);
+            // itemtype = "Computer", "Monitor", etc.
+            const assetType = items[0]?.itemtype ?? "Inconnu";
+            results.push({ ...ticket, assetType });
+        } catch {
+            results.push({ ...ticket, assetType: "Inconnu" });
+        }
+    }
+    return results;
+}

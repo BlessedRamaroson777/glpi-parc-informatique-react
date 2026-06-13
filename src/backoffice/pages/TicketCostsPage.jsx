@@ -1,6 +1,6 @@
 // CostsByAssetType.jsx
 import React, { useState, useEffect } from "react";
-import { getTicketCout, getTickets, getTicketsCosts } from "../../common/services/ticketService.jsx"
+import { getTicketCout, getTickets, getTicketsCosts, getTicketsWithAssetTypes } from "../../common/services/ticketService.jsx"
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 import apiV1 from "../../common/utils/apiV1.jsx"
 
@@ -51,18 +51,57 @@ export default function CostsByAssetType() {
             try {
                 const dbData = await getTicketCout()
                 const couts = dbData.couts
-                console.log(couts)
 
                 setGrouped(couts)
             } catch (e) {
                 setError(e.message)
             } finally {
                 setLoading(false)
-            }
-            
+            } 
+
+            // dans load() :
+            const allTickets = await getTickets();
+            const ids = allTickets.map(t => t.id);
+
+            // Enrichit chaque ticket avec son assetType via Item_Ticket
+            const ticketsWithTypes = await getTicketsWithAssetTypes(allTickets);
+            setTickets(ticketsWithTypes);
+
+            const { byTicket, totals } = await getTicketsCosts(ids);
+            setByTicket(byTicket);
+            setTotals(totals);
         }
         load()
     }, [])
+
+    // Construit une liste unifiée par asset type
+    const ASSET_KEYS = ASSET_TYPES.map(t => t.key); // ou tous les types connus
+
+    // Map SQLite par assetType
+    const sqliteByType = {};
+    grouped.forEach(g => {
+        sqliteByType[g.assetType] = g;
+    });
+
+    // Map GLPI par assetType (tickets ont-ils un champ assetType ?)
+    // Si oui, grouper byTicket par ticket.assetType
+    console.log(tickets)
+    const glpiByType = {};
+    tickets.forEach(ticket => {
+        const type = ticket.assetType ?? "Inconnu";
+        const costs = byTicket[ticket.id];
+        if (!costs) return;
+        if (!glpiByType[type]) glpiByType[type] = { totalGeneral: 0, totalDuration: 0 };
+        glpiByType[type].totalGeneral  += costs.totalGeneral;
+        glpiByType[type].totalDuration += costs.totalDuration;
+    });
+
+    // Tous les types présents dans l'une ou l'autre source
+    const allTypes = [...new Set([
+        ...Object.keys(sqliteByType),
+        ...Object.keys(glpiByType),
+    ])];
+    
 
     if (loading) return <p className="loading">Chargement des coûts…</p>
     if (error)   return <p className="error">Erreur : {error}</p>
@@ -70,122 +109,54 @@ export default function CostsByAssetType() {
     return (
         <section className="costs-by-asset">
             <h2>Coûts par type d'asset</h2>
+            <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                    <thead>
+                        <tr style={{ background: "var(--bg-light, #f1f5f9)", textAlign: "left" }}>
+                            <th style={th}>Type d'asset</th>
+                            <th style={th}>Coût base (SQLite)</th>
+                            <th style={th}>Coût réouverture</th>
+                            <th style={th}>Coût GLPI</th>
+                            <th style={{ ...th, color: "var(--primary, #2563eb)" }}>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {allTypes.map((type, i) => {
+                            const sql  = sqliteByType[type];
+                            const glpi = glpiByType[type];
 
-            {grouped.length === 0 ? 
-                (<div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
-                        <thead>
-                            <tr style={{ background: "var(--bg-light, #f1f5f9)", textAlign: "left" }}>
-                                <th style={th}>Type d'asset</th>
-                                <th style={th}>Coût base (SQLite)</th>
-                                <th style={th}>Coût reouverture </th>
-                                <th style={th}>Coût GLPI </th>
-                                <th style={{ ...th, color: "var(--primary, #2563eb)" }}>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {tickets.map((ticket, i) => {
-                                const t = byTicket[ticket.id];
-                                if (!t) return null;
-                                return (
-                                    <React.Fragment key={ticket.id}>
-                                        <tr style={{
-                                            borderBottom: "1px solid var(--border, #e2e8f0)",
-                                            background: i % 2 === 0 ? "#fff" : "var(--bg-light, #f8fafc)",
-                                        }}>
-                                            <td style={td}>{t.assetType}</td>
-                                            <td style={td}>0</td>
-                                            <td style={td}>0</td>
-                                            <td style={td}>0</td>
-                                            <td style={{ ...td, fontWeight: 700, color: "var(--primary, #2563eb)" }}>
-                                                {formatCurrency(t.totalGeneral)}
-                                            </td>
-                                        </tr>
-    
-                                        {/* {t.costs.map((cost, j) => {
-                                            const duration = toNum(cost.duration ?? cost.actiontime);
-                                            const h        = duration / 3600;
-                                            const timeCost = Math.round(toNum(cost.cost_time) * h * 100) / 100;
-                                            const sub      = timeCost + toNum(cost.cost_fixed);
-                                            return (
-                                                <tr key={j} style={{
-                                                    borderBottom: "1px solid var(--border, #e2e8f0)",
-                                                    background: "#fafbff",
-                                                    fontSize: "0.82rem",
-                                                    color: "var(--text-muted, #64748b)",
-                                                }}>
-                                                    <td style={td} />
-                                                    <td style={{ ...td, paddingLeft: "2rem" }}>
-                                                        ↳ {cost.name || `Coût #${j + 1}`}
-                                                    </td>
-                                                    <td style={td} />
-                                                    <td style={td}>{formatDuration(duration)}</td>
-                                                    <td style={td}>{formatCurrency(timeCost)}</td>
-                                                    <td style={td}>{formatCurrency(toNum(cost.cost_fixed))}</td>
-                                                    <td style={td}>{formatCurrency(toNum(cost.cost_material))}</td>
-                                                    <td style={td}>{formatCurrency(sub)}</td>
-                                                </tr>
-                                            );
-                                        })} */}
-                                    </React.Fragment>
-                                );
-                            })}
-    
-                            {/* {totals && (
-                                <tr style={{ background: "var(--primary, #2563eb)", color: "#fff", fontWeight: 700 }}>
-                                    <td style={td} colSpan={3}>Totaux généraux</td>
-                                    <td style={td}>{formatDuration(totals.totalDuration)}</td>
-                                    <td style={td}>{formatCurrency(totals.totalTime)}</td>
-                                    <td style={td}>{formatCurrency(totals.totalFixed)}</td>
-                                    <td style={td}>{formatCurrency(totals.totalMaterial)}</td>
-                                    <td style={td}>{formatCurrency(totals.totalGeneral)}</td>
+                            const superCout   = sql?.superCout   ?? 0;
+                            const reouverture = sql?.reouverture ?? 0;
+                            const coutGlpi    = glpi?.totalGeneral ?? 0;
+                            const total       = superCout + reouverture + coutGlpi;
+
+                            return (
+                                <tr key={type} style={{
+                                    borderBottom: "1px solid var(--border, #e2e8f0)",
+                                    background: i % 2 === 0 ? "#fff" : "var(--bg-light, #f8fafc)",
+                                }}>
+                                    <td style={td}>{type}</td>
+                                    <td style={td}>{formatCurrency(superCout)}</td>
+                                    <td style={td}>{formatCurrency(reouverture)}</td>
+                                    <td style={td}>{formatCurrency(coutGlpi)}</td>
+                                    <td style={{ ...td, fontWeight: 700, color: "var(--primary, #2563eb)" }}>
+                                        {formatCurrency(total)}
+                                    </td>
                                 </tr>
-                            )} */}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <div className="table-responsive">
-                    <table className="assets-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                            <tr>
-                                <th style={th}>Type d'asset</th>
-                                <th style={th}>Coût base (SQLite)</th>
-                                <th style={th}>Coût reouverture </th>
-                                <th style={th}>Coût GLPI </th>
-                                <th style={th}>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {grouped.map(g => {
-                                return (
-                                    <React.Fragment key={g.key}>
-                                        <tr
-                                            style={{ cursor: "pointer", borderBottom: "1px solid #e2e8f0" }}
-                                        >
-                                            <td style={td}>
-                                                <span className="asset-type">{g.assetType}</span>
-                                            </td>
-                                            <td style={td}>{g.superCout} €</td>
-                                            <td style={td}>{g.reouverture} €</td>
-                                            <td style={td}>{g.coutTotal} €</td>
-                                            <td style={td}>{g.coutTotal + g.superCout + g.reouverture} €</td>
-                                        </tr>
-
-                                    </React.Fragment>
-                                )
-                            })}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td style={td}><strong>TOTAL</strong></td>
-                                <td style={td}><strong>{fmt(dbTotal)} €</strong></td>
-                                <td style={td}><strong>{fmt(glpiTotal)} €</strong></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            )}
+                            );
+                        })}
+                    </tbody>
+                    <tfoot>
+                        <tr style={{ background: "var(--primary, #2563eb)", color: "#fff", fontWeight: 700 }}>
+                            <td style={td}>TOTAL</td>
+                            <td style={td}>{formatCurrency(allTypes.reduce((s, t) => s + (sqliteByType[t]?.superCout ?? 0), 0))}</td>
+                            <td style={td}>{formatCurrency(allTypes.reduce((s, t) => s + (sqliteByType[t]?.reouverture ?? 0), 0))}</td>
+                            <td style={td}>{formatCurrency(allTypes.reduce((s, t) => s + (glpiByType[t]?.totalGeneral ?? 0), 0))}</td>
+                            <td style={td}>{formatCurrency(allTypes.reduce((s, t) => s + (sqliteByType[t]?.superCout ?? 0) + (sqliteByType[t]?.reouverture ?? 0) + (glpiByType[t]?.totalGeneral ?? 0), 0))}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </section>
     )
 }
