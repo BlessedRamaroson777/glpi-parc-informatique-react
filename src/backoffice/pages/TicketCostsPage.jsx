@@ -1,5 +1,5 @@
 // CostsByAssetType.jsx
-import React from "react"
+import React, { useState, useEffect } from "react";
 import { getTicketCout, getTickets, getTicketsCosts } from "../../common/services/ticketService.jsx"
 import { ASSET_TYPES } from "../../common/constants/Assets.jsx"
 import apiV1 from "../../common/utils/apiV1.jsx"
@@ -59,14 +59,7 @@ export default function CostsByAssetType() {
             } finally {
                 setLoading(false)
             }
-            const allTickets = await getTickets();
-            const ids = allTickets.map(t => t.id);
-            setTickets(allTickets);
             
-            const { byTicket, totals } = await getTicketsCosts();
-
-            setByTicket(byTicket);
-            setTotals(totals);
         }
         load()
     }, [])
@@ -100,17 +93,16 @@ export default function CostsByAssetType() {
                                             borderBottom: "1px solid var(--border, #e2e8f0)",
                                             background: i % 2 === 0 ? "#fff" : "var(--bg-light, #f8fafc)",
                                         }}>
-                                            <td style={td}>ticket.assetType</td>
-                                            <td style={td}>{formatDuration(t.totalDuration)}</td>
-                                            <td style={td}>{formatCurrency(t.totalTime)}</td>
-                                            <td style={td}>{formatCurrency(t.totalFixed)}</td>
-                                            <td style={td}>{formatCurrency(t.totalMaterial)}</td>
+                                            <td style={td}>{t.assetType}</td>
+                                            <td style={td}>0</td>
+                                            <td style={td}>0</td>
+                                            <td style={td}>0</td>
                                             <td style={{ ...td, fontWeight: 700, color: "var(--primary, #2563eb)" }}>
                                                 {formatCurrency(t.totalGeneral)}
                                             </td>
                                         </tr>
     
-                                        {t.costs.map((cost, j) => {
+                                        {/* {t.costs.map((cost, j) => {
                                             const duration = toNum(cost.duration ?? cost.actiontime);
                                             const h        = duration / 3600;
                                             const timeCost = Math.round(toNum(cost.cost_time) * h * 100) / 100;
@@ -134,12 +126,12 @@ export default function CostsByAssetType() {
                                                     <td style={td}>{formatCurrency(sub)}</td>
                                                 </tr>
                                             );
-                                        })}
+                                        })} */}
                                     </React.Fragment>
                                 );
                             })}
     
-                            {totals && (
+                            {/* {totals && (
                                 <tr style={{ background: "var(--primary, #2563eb)", color: "#fff", fontWeight: 700 }}>
                                     <td style={td} colSpan={3}>Totaux généraux</td>
                                     <td style={td}>{formatDuration(totals.totalDuration)}</td>
@@ -148,7 +140,7 @@ export default function CostsByAssetType() {
                                     <td style={td}>{formatCurrency(totals.totalMaterial)}</td>
                                     <td style={td}>{formatCurrency(totals.totalGeneral)}</td>
                                 </tr>
-                            )}
+                            )} */}
                         </tbody>
                     </table>
                 </div>

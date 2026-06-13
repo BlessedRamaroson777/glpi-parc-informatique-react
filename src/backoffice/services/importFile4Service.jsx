@@ -75,7 +75,7 @@ async function buildRegistryFromGlpi(assetNames, pushLog) {
 export async function runFile4Import(zipFile, pushLog, dryRun = false, registry = {}) {
     pushLog("═══ Feuille 4 : Images ═══", "info")
 
-    const { assetRegistry = new Map() } = registry
+    let { assetRegistry = new Map() } = registry
 
     const zip = await JSZip.loadAsync(zipFile)
     const imageFiles = Object.entries(zip.files).filter(([name, file]) =>

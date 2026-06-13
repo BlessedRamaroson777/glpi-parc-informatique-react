@@ -94,7 +94,7 @@ function toNum(v) {
     return parseFloat(String(v).replace(/\s/g, "").replace(",", ".")) || 0;
 }
 
-export async function getTicketsCosts(ticketIds, onProgress) {
+export async function getTicketsCosts(ticketIds) {
     const BATCH_SIZE = 10;
     const allResults = [];
     let done = 0;
@@ -110,7 +110,6 @@ export async function getTicketsCosts(ticketIds, onProgress) {
         );
         allResults.push(...batchResults);
         done += batch.length;
-        onProgress?.(done);
     }
 
     const byTicket = {};

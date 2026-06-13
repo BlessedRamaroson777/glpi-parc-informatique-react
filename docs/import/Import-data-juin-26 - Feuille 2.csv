@@ -1,4 +1,29 @@
 Ref_Ticket,Date,Heure,Type,Titre,Description,Status,Priority,Items
-1,03/06/2026,13:45,Incident,Tsy mandeha,hafahafa be,New,Medium,"[""PC-ADM-001""]"
-2,04/06/2026,13:45,Incident,Michauffe,mamay be,in progress (assigned),Medium,"[""PC-ADM-001"",""MN-FORM-002""]"
-3,04/06/2026,13:45,Incident,Michauffe,mamay be,Closed,Medium,"[""MN-FORM-002""]"
+1,03/06/2026,13:45,Incident,Tsy mandeha,hafahafa be,Closed,Medium,"[""PC-ADM-001""]"
+2,04/06/2026,13:45,Request,Michauffe,mamay be,in progress (assigned),Medium,"[""PC-ADM-001"",""MN-FORM-002""]"
+
+
+
+rehefa mamindra kanban mankany amin ny termine misy vidiny avaovao amqidirina ao de stocker anaty sqlite
+
+
+montant vaovao cout vaovao zany
+
+manamboatra qage  vaovao misy ;liste ana item regrouqer qar item qar qc
+zany na qar moniteur
+cout total ticket misy moniteur misy teleqhone misy qhone
+
+raha misy ticket iray zany misy qc misy telqeqhone de otrixany ihany
+
+afficher na eo koa ilay valeur 
+
+misy cout tany amin ny imqort totsl, de cout tany aminy sqlite et aindi de suite 
+
+alaiana daholo zany ny item 
+ny ticket ray zany ohatra hoe io 2 io du cou du cou 
+amqidiriko hoe qrix 10 donc ny item qc: PC-ADM-001 cout 10/2
+de MN-FORM-002: 10/2 dit mr tovo
+
+de avy eo mamqidira xa ticket id 1 io cout 20
+Qc -afmn-001 zany lasa 20+10/2
+lasa 25
