@@ -24,6 +24,23 @@ CREATE TABLE IF NOT EXISTS appSettings (
     settingValue TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS couts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+    valeur TEXT NOT NULL,
+    ticketId int, 
+    assetType TEXT, 
+    typeCout text,
+    glpiCout int, 
+    valeurInitial int,
+    heure DATETIME
+);
+
+SELECT 
+      id, ticketId, valeur, assetType, typeCout, glpiCout, valeurInitial 
+    FROM couts 
+      WHERE ticketId = 1034 and 
+      heure = (SELECT max(heure) FROM couts WHERE ticketId = 1034 and typeCout = "superCout");
+
 -- ── 1. INSERTION DES LANGUES ────────────────────────────────────────────────
 ,INSERT INTO langues (id, nom) VALUES 
 (1, 'Français')
@@ -78,3 +95,15 @@ INNER JOIN statuts s ON ls.statutId = s.id
 INNER JOIN langues l ON ls.langueId = l.id
 WHERE l.nom = "Malagasy"
 AND s.nom = "Nouveau";
+
+
+
+ticket 1:reouverture 5
+
+termine 45
+
+ticket 2: reouverture 10
+
+termine 150
+
+anulation ticket 2

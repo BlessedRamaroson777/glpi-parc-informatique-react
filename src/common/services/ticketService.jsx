@@ -78,46 +78,63 @@ export async function loadStatusTranslations() {
   return translations; // ✓ On retourne l'objet mappé { "1": "Nouveau", "2": "En cours..." }
 }
 
-/**
- * Retourne les coûts de chaque ticket + les totaux globaux
- * @param {number[]} ticketIds - liste d'IDs de tickets
- * @returns {Promise<{ byTicket: Object, totals: Object }>}
- */
-export async function getTicketsCosts(ticketIds) {
-    const results = await Promise.allSettled(
-        ticketIds.map(id =>
-            apiV2.get(`${BASE}/${id}/Cost`)
-                .then(data => ({ id, costs: Array.isArray(data) ? data : (data?.data ?? []) }))
-                .catch(() => ({ id, costs: [] }))
-        )
-    );
+export async function getTicketCout() {
+  
+  // Utilisation d'un fetch standard si requestJSON n'est pas dispo globalement
+  const response = await fetch(`http://localhost:5050/api/coutsGeneral`);
+  const d = await response.json();
+
+  return d;
+
+}
+
+function toNum(v) {
+    if (v === null || v === undefined || v === "") return 0;
+    if (typeof v === "number") return v;
+    return parseFloat(String(v).replace(/\s/g, "").replace(",", ".")) || 0;
+}
+
+export async function getTicketsCosts(ticketIds, onProgress) {
+    const BATCH_SIZE = 10;
+    const allResults = [];
+    let done = 0;
+
+    for (let i = 0; i < ticketIds.length; i += BATCH_SIZE) {
+        const batch = ticketIds.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.allSettled(
+            batch.map(id =>
+                apiV2.get(`${BASE}/${id}/Cost`)
+                    .then(data => ({ id, costs: Array.isArray(data) ? data : (data?.data ?? []) }))
+                    .catch(() => ({ id, costs: [] }))
+            )
+        );
+        allResults.push(...batchResults);
+        done += batch.length;
+        onProgress?.(done);
+    }
 
     const byTicket = {};
 
-    for (const result of results) {
+    for (const result of allResults) {
         if (result.status !== "fulfilled") continue;
         const { id, costs } = result.value;
 
-        const totalDuration = costs.reduce((s, c) => s + (c.duration || c.actiontime || 0), 0);
-        const totalFixed    = costs.reduce((s, c) => s + (c.cost_fixed || 0), 0);
-        const totalMaterial = costs.reduce((s, c) => s + (c.cost_material || 0), 0);
+        const totalDuration = costs.reduce((s, c) => s + toNum(c.duration ?? c.actiontime), 0);
+        const totalFixed    = costs.reduce((s, c) => s + toNum(c.cost_fixed), 0);
+        const totalMaterial = costs.reduce((s, c) => s + toNum(c.cost_material), 0);
         const totalTime     = costs.reduce((s, c) => {
-            const h = (c.duration || c.actiontime || 0) / 3600;
-            return s + (c.cost_time || 0) * h;
+            const h = toNum(c.duration ?? c.actiontime) / 3600;
+            return s + Math.round(toNum(c.cost_time) * h * 100) / 100;
         }, 0);
-        const totalGeneral  = totalFixed + totalMaterial + totalTime;
+        const totalGeneral  = costs.reduce((s, c) => {
+            const h        = toNum(c.duration ?? c.actiontime) / 3600;
+            const timePart = Math.round(toNum(c.cost_time) * h * 100) / 100;
+            return s + timePart + toNum(c.cost_fixed);
+        }, 0);
 
-        byTicket[id] = {
-            costs,
-            totalDuration,  // en secondes
-            totalFixed,
-            totalMaterial,
-            totalTime,      // coût horaire × heures
-            totalGeneral,
-        };
+        byTicket[id] = { costs, totalDuration, totalFixed, totalMaterial, totalTime, totalGeneral };
     }
 
-    // Totaux globaux sur tous les tickets
     const totals = Object.values(byTicket).reduce(
         (acc, t) => ({
             totalDuration: acc.totalDuration + t.totalDuration,

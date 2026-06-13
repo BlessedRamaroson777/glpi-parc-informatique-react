@@ -63,7 +63,7 @@ export default function BackendTest() {
 
   return (
     <section className="backend-test-page">
-      {/* <TicketCostsPage /> */}
+      <TicketCostsPage />
       {/* <StatutTraduit /> */}
       <h1>Backend Test</h1>
       <p>Test rapide du backend Node + SQLite.</p>

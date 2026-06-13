@@ -1,43 +1,136 @@
 import React, { useState, useEffect } from "react";
 import { 
-    ajoutCommentaire
+    ajoutCout
 } from "../services/ticketsService.jsx";
 import { getAllAssets } from "../services/assetsService.jsx";
 import "../styles/create-ticket.css";
 import apiV1 from "../../common/utils/apiV1.jsx";
+import apiV2 from "../../common/utils/apiV2.jsx";
+import { API } from "../../common/constants/apiConfig.jsx";
+const BASE = "/api.php/v2.3/Assistance/Ticket"
+
 
 export default function Solution({idTicket : id}) {
     const [loading, setLoading] = useState(false);
-    const [commentaire, setCommentaire] = useState("");
+    const [Cout, setCout] = useState("");
     const [status, setStatus] = useState(null);
     
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        setLoading(true);
-        if(!id) {
-            setStatus({ type: 'error', message: 'ID du ticket manquant pour ajouter une solution.' });
-            setLoading(false);
-            return;
+    async function requestJSON(url, options) {
+        const response = await fetch(url, options)
+        const data = await response.json()
+        if (!response.ok) {
+            throw new Error(data?.error || "Erreur API")
         }
-        
+        console.log(data)
+        return data
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setLoading(true)
+
+        if (!id) {
+            setStatus({ type: "error", message: "ID du ticket manquant." })
+            setLoading(false)
+            return
+        }
+        if (!Cout.trim()) {
+            setLoading(false)
+            return
+        }
 
         try {
-            // 1. Créer le ticket
-            const ticketRes = await ajoutCommentaire(id, commentaire);
-            console.log(ticketRes)
+            // 1. Récupérer les assets liés au ticket via V1
+            const itemsRes = await apiV1.get(`Ticket/${id}/Item_Ticket`)
+            // console.log("itemsRes →", itemsRes)  
+            const items = Array.isArray(itemsRes) ? itemsRes : (itemsRes?.data ?? [])
+            // console.log("items →", items)        
+            // const items = Array.isArray(itemsRes) ? itemsRes : (itemsRes?.data ?? [])
 
-            setStatus({ 
-                type: 'success', 
-                message: `Commentaire ajouté au ticket #${id} avec succès.` 
-            });
-                        
+            const montantTotal = parseFloat(Cout)
+            const nbItems = items.length || 1
+            const montantParItem = montantTotal / nbItems
+            // const montantParItem = Math.round((montantTotal / nbItems) * 100) / 100
+
+            if (items.length === 0) {
+                // Pas d'asset lié → insérer une ligne sans assetId
+            //     console.log("POST body →", {
+            //     valeur: montantParItem,
+            //     ticketId: id,
+            //     assetId: item.items_id,
+            //     assetType: item.itemtype,
+            // })
+                await fetch(`${API}/api/couts`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        valeur: montantTotal,
+                        ticketId: id,
+                        assetId: null,
+                        assetType: null,
+                    }),
+                })
+            } else {
+                // Une ligne par asset
+                const now = new Date().toISOString();
+                const res = await apiV2.get(`${BASE}/${id}/Cost`);
+                const costs = Array.isArray(res) ? res : res?.data ?? [];
+                let totalCost;
+                if (costs.length == 0){
+                    totalCost = 0
+                }
+                else{
+                    totalCost = costs.reduce((sum, cost) => {
+                        const fixed = cost.cost_fixed || 0;
+                        const material = cost.cost_material || 0;
+
+                        const durationHours = (cost.duration || 0) / 3600;
+                        const timeCost = (cost.cost_time || 0) * durationHours;
+
+                        return sum + fixed + timeCost + material;
+                    }, 0);
+                    // console.log(res)
+                    // console.log(totalCost)
+
+                }
+                const azo = await Promise.all(items.map(item =>
+                    fetch(`${API}/api/couts`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            valeur: montantParItem,
+                            ticketId: id,
+                            assetType: item.itemtype, // ex: "Computer", "Phone", "Monitor"
+                            typeCout: "superCout", 
+                            glpiCout: totalCost,
+                            heure: now, 
+                            valeurInitial: montantTotal                            
+                        }),
+                    })
+                ))
+                // console.log(await azo[0].text())
+            }
+
+            setStatus({ type: "success", message: `Coût ajouté au ticket #${id}.` })
+            setCout("")
         } catch (error) {
-            setStatus({ type: 'error', message: 'Erreur lors de la création du commentaire : ' + error.message });
+            setStatus({ type: "error", message: "Erreur : " + error.message })
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
+        // ── Couts ──────────────────────────────────────────────────────────
+    async function createCout(e) {
+        e.preventDefault()
+        if (!Cout.trim()) return
+        await requestJSON(`${API}/api/couts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ valeur: Cout, ticketId: id }),
+        })
+        setCout("")
+        await loadCouts()
+    }
 
 
     const handleInputChange = (e) => {
@@ -63,25 +156,22 @@ export default function Solution({idTicket : id}) {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Commentaire</label>
-                        <textarea 
-                            name="content" 
-                            className="form-control" 
-                            placeholder="Détaillez votre problème ou demande..."
-                            value={commentaire} 
-                            onChange={(e) => setCommentaire(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    <div className="form-actions">
-                        <button type="submit" className="btn-submit" disabled={loading}>
-                            {loading ? "Création en cours..." : "Soumettre le commentaire"}
-                        </button>
-                    </div>
-                </form>
+                
+                    <form onSubmit={handleSubmit} className="card-form">
+                        <div className="form-group">
+                            <label>Cout</label>
+                            <input
+                                value={Cout}
+                                onChange={e => setCout(e.target.value)}
+                                placeholder="Inserer le cout"
+                            />
+                        </div>
+                        <div className="form-actions">
+                            <button type="submit" className="btn-submit" disabled={loading}>
+                                {loading ? "Création en cours..." : "Soumettre le Cout"}
+                            </button>
+                        </div>
+                    </form>
             </div>
         </section>
     );

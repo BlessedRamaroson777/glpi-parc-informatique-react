@@ -7,6 +7,106 @@ const db = openDb();
 app.use(cors());
 app.use(express.json());
 
+app.get("/api/couts", (req, res) => {
+  db.all("SELECT ticketId, valeur, assetType, typeCout, glpiCout, valeurInitial FROM couts ORDER BY id DESC", (error, rows) => {
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json({ couts: rows });
+  });
+});
+
+app.get("/api/coutsGeneral", (req, res) => {
+  // db.all(`SELECT sum(valeur) as superCout, assetType, typeCout, sum(glpiCout) as coutTotal FROM couts group by assetType, typeCout
+  db.all(`
+    SELECT
+      assetType,
+      SUM(CASE WHEN typeCout = 'superCout' THEN valeur ELSE 0 END) AS superCout,
+      SUM(CASE WHEN typeCout = 'reouverture' THEN valeur ELSE 0 END) AS reouverture,
+      SUM(glpiCout) AS coutTotal
+    FROM couts
+    GROUP BY assetType
+    `, (error, rows) => {
+    if (error) { res.status(500).json({ error: error.message }); return; }
+    res.json({ couts: rows });
+  });
+});
+
+app.get("/api/coutsTicketId/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!id) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  db.get("SELECT id, valeur, ticketId FROM couts WHERE ticketId = ?", [id], (error, row) => {
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ langue: row });
+  });
+});
+
+app.get("/api/coutsLast/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!id) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  db.all(`SELECT 
+      id, ticketId, valeur, assetType, typeCout, glpiCout, valeurInitial 
+    FROM couts 
+      WHERE ticketId = ? and 
+      heure = (SELECT max(heure) FROM couts WHERE ticketId = ? and typeCout = "superCout")
+    `, [id, id], (error, row) => {
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ couts: row });
+  });
+});
+
+// Route POST côté serveur
+app.post("/api/couts", (req, res) => {
+    const { ticketId, valeur, assetType, typeCout, glpiCout, heure, valeurInitial } = req.body
+    // if (!ticketId || !valeur || !assetType || !typeCout || !glpiCout || !heure) return res.status(400).json({ error: "Missing fields" })
+    
+    db.run(
+    "INSERT INTO couts (ticketId, valeur, assetType, typeCout, glpiCout, heure, valeurInitial) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [ticketId, valeur, assetType, typeCout, glpiCout, heure, valeurInitial], function onInsert(error) {
+      if (error) {
+        res.status(500).json({ error: error.message });
+      }
+      res.status(201).json({ id: this.lastID })
+      console.log(req.body)
+    });
+ 
+});
+
+app.delete("/api/couts/:id", (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  db.run("DELETE FROM couts WHERE id = ?", [id], function onDelete(error) {
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+
+    res.json({ deleted: this.changes });
+  });
+});
+
+
+
 app.get("/api/langues", (req, res) => {
   db.all("SELECT id, nom FROM langues ORDER BY id DESC", (error, rows) => {
     if (error) {

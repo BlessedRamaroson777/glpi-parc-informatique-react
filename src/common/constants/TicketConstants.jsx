@@ -33,7 +33,9 @@ export const TICKET_STATUS_IMPORT = [
 ];
 export const TICKET_TYPES_IMPORT = [
     { value: 1, label: "Incident" },
-    { value: 2, label: "Request" }
+    { value: 2, label: "Request" },
+    { value: 2, label: "Demande" },
+
 ];
 
 export const DEFAULT_KANBAN_COLORS = {

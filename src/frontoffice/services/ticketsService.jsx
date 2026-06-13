@@ -126,6 +126,12 @@ export async function ajoutCommentaire (tickets_id, content) {
     // apiV2.post(`/api.php/v2/Assistance/Ticket/${tickets_id}/ITILSolution`, { content: content })
 }
 
+
+// TicketFollowup
+export async function ajoutCout (tickets_id, cout) {
+    
+}
+
 export async function ajoutDocumentCommentaire(document, tickets_id) {
     const formData = new FormData();
 

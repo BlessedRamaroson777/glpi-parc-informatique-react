@@ -7,6 +7,7 @@ import "../../common/styles/tickets.css";
 import CreateTicket from "./CreateTicket.jsx";
 import { DEFAULT_KANBAN_COLORS } from "../../common/constants/TicketConstants.jsx";
 import Solution from "../components/Solution.jsx";
+import Annulation   from "../components/Annulation.jsx";
 
 const SETTINGS_API = "http://localhost:5050";
 
@@ -15,9 +16,11 @@ export default function StatutTicket() {
   const [showDetail, setShowDetail] = React.useState(false);
   const [showCreate, setShowCreate] = React.useState(false);
   const [showSolution, setShowSolution] = React.useState(false);
+  const [showAnnulation, setShowAnnulation] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [selectedTicket, setSelectedTicket] = React.useState();
   const [status, setStatus] = React.useState();
+  const [ancienStatus, setAncienStatus] = React.useState();
   const [kanbanColors, setKanbanColors] = React.useState(DEFAULT_KANBAN_COLORS);
 
   // ✓ VOTRE IDÉE : TICKET_STATUS devient un état qui va recevoir le résultat du chargement
@@ -103,9 +106,13 @@ export default function StatutTicket() {
     loadKanbanColors();
   }
 
-  const onDragStart = (e, id) => {
+  const onDragStart = (e, id, statusFarany) => {
     e.dataTransfer.setData("text/plain", id);
-  };
+    if(statusFarany==6){
+      setAncienStatus(6)
+      // alert(ancienStatus)
+    }
+  }
 
   const onDragOver = (e) => {
     e.preventDefault();
@@ -117,7 +124,13 @@ export default function StatutTicket() {
     const payload = { ...ticketChanger, status: newStatus }
     await apiV2.patch(`/api.php/v2/Assistance/Ticket/${id}`, payload)
     setSelectedTicket(id);
-    setShowSolution(true);
+    if(newStatus==6){
+      setShowSolution(true);
+    }
+    if(ancienStatus==6){
+      setAncienStatus(null);
+      setShowAnnulation(true);
+    }
     loadTickets();
   };
 
@@ -151,7 +164,7 @@ export default function StatutTicket() {
               <li
                   key={ticket.id}
                   draggable
-                  onDragStart={(e) => onDragStart(e, ticket.id)}
+                  onDragStart={(e) => onDragStart(e, ticket.id, ticket.status)}
                   onClick={() => handleShowDetail(ticket)}
                   className="ticket-list-item"
                 >
@@ -188,6 +201,14 @@ export default function StatutTicket() {
         <div className="contenu-popup">
             <button className="btn-fermer" onClick={() => setShowSolution(false)}>X</button>
             <Solution idTicket={selectedTicket} />
+        </div>
+      </div>
+    }
+    {showAnnulation && 
+      <div className="overlay-popup active" id="monPopup">
+        <div className="contenu-popup">
+            <button className="btn-fermer" onClick={() => setShowAnnulation(false)}>X</button>
+            <Annulation idTicket={selectedTicket} />
         </div>
       </div>
     }
