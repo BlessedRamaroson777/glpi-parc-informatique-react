@@ -15,7 +15,9 @@ function fmt(n) {
 }
 
 function formatCurrency(n) {
-    return Number(n).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })
+    return Number(n)
+    // return Number(n).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })
+
 }
 
 function formatDuration(seconds) {
@@ -97,10 +99,11 @@ export default function CostsByAssetType() {
     });
 
     // Tous les types présents dans l'une ou l'autre source
-    const allTypes = [...new Set([
-        ...Object.keys(sqliteByType),
-        ...Object.keys(glpiByType),
-    ])];
+    // const allTypes = [...new Set([
+    //     ...Object.keys(sqliteByType),
+    //     ...Object.keys(glpiByType),
+    // ])];
+    const allTypes = ASSET_TYPES.map(t => t.key);
     
 
     if (loading) return <p className="loading">Chargement des coûts…</p>
