@@ -100,6 +100,8 @@ export default function Solution({idTicket : id}) {
                 const valeurFaranay = donnee[0].valeurInitial;
                     console.log(valeurFaranay);
                 const reouverture = valeurFaranay * montantTotal / 100
+                const montantReouvertureParItem = reouverture / nbItems
+
 
 
                 // const effacer = donnee.map(item =>
@@ -122,7 +124,7 @@ export default function Solution({idTicket : id}) {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            valeur: reouverture,
+                            valeur: montantReouvertureParItem,
                             ticketId: id,
                             assetType: item.itemtype, // ex: "Computer", "Phone", "Monitor"
                             typeCout: "reouverture", 
