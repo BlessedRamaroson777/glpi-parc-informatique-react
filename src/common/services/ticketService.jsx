@@ -154,9 +154,19 @@ export async function getTicketsWithAssetTypes(tickets) {
         try {
             const itemsRes = await getTicketItems(ticket.id);
             const items = Array.isArray(itemsRes) ? itemsRes : (itemsRes?.data ?? []);
-            // itemtype = "Computer", "Monitor", etc.
-            const assetType = items[0]?.itemtype ?? "Inconnu";
-            results.push({ ...ticket, assetType });
+
+            if (items.length === 0) {
+                results.push({ ...ticket, assetType: "Inconnu" });
+                continue;
+            }
+
+            // Types distincts sur ce ticket
+            const types = [...new Set(items.map(i => i.itemtype ?? "Inconnu"))];
+
+            // Un "ticket" par type
+            for (const assetType of types) {
+                results.push({ ...ticket, assetType });
+            }
         } catch {
             results.push({ ...ticket, assetType: "Inconnu" });
         }
